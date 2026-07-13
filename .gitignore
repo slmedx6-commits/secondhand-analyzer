@@ -1,0 +1,23 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment files
+venv/
+ENV/
+env/
+.venv/
+
+# Environment Variables Config File (Contains your private Gemini API key!)
+.env
+
+# Weights & models (YOLO downloads automatically)
+yolov8n.pt
+backend/price_model.joblib
+
+# IDE & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

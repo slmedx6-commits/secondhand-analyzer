@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Second-Hand Item Analyzer & Price Estimator</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Outfit Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: radial-gradient(circle at 50% 50%, #0c1020 0%, #05070f 60%, #020307 100%);
+        }
+        .glass-card {
+            background: rgba(10, 15, 30, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(99, 102, 241, 0.15);
+        }
+        .glass-card-accent {
+            background: rgba(10, 15, 30, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(34, 197, 94, 0.25);
+        }
+        .glow-indigo {
+            box-shadow: 0 0 30px rgba(99, 102, 241, 0.15), inset 0 0 12px rgba(99, 102, 241, 0.05);
+        }
+        .glow-green {
+            box-shadow: 0 0 35px rgba(34, 197, 94, 0.15), inset 0 0 15px rgba(34, 197, 94, 0.05);
+        }
+        .glow-neon-border {
+            position: relative;
+        }
+        .glow-neon-border::before {
+            content: '';
+            position: absolute;
+            top: -1px; left: -1px; right: -1px; bottom: -1px;
+            background: linear-gradient(135deg, #6366f1, #a855f7, #22c55e);
+            border-radius: inherit;
+            z-index: -1;
+            opacity: 0.15;
+            transition: opacity 0.3s ease;
+        }
+        .glow-neon-border:hover::before {
+            opacity: 0.35;
+        }
+
+        /* Scanner Laser Line Animation */
+        @keyframes scan {
+            0% { top: 0%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+        .scanner-line {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(to right, transparent, #22c55e 10%, #4ade80 50%, #22c55e 90%, transparent);
+            box-shadow: 0 0 10px #22c55e, 0 0 20px #4ade80;
+            animation: scan 2.5s ease-in-out infinite;
+            z-index: 10;
+        }
+
+        /* Slide & Fade In Transition */
+        .fade-in-up {
+            animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #020307;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #334155;
+        }
+    </style>
+</head>
+<body class="text-slate-200 min-h-screen flex flex-col pb-6 antialiased">
+
+    <!-- Futuristic Header -->
+    <header class="w-full glass-card border-b border-indigo-500/10 sticky top-0 z-40 py-3 md:py-4 px-4 md:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-[0_4px_30px_rgba(0,0,0,0.4)]">
+        <div class="flex items-center gap-3">
+            <div class="p-2 bg-indigo-500/20 border border-indigo-500/30 rounded-xl flex items-center justify-center text-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.2)]">
+                <i data-lucide="scan-search" class="w-6 h-6"></i>
+            </div>
+            <div class="text-center sm:text-left">
+                <h1 class="text-lg md:text-xl font-black tracking-widest text-white flex items-center justify-center sm:justify-start gap-2">
+                    REVALUA <span class="text-[9px] tracking-wider uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-semibold">Dual ML v1.2</span>
+                </h1>
+                <p class="text-[10px] text-slate-400 tracking-wider">AI Second-Hand Item Analyzer & Age Estimation</p>
+            </div>
+        </div>
+
+        <!-- Host Stats Widgets -->
+        <div class="flex items-center gap-4 bg-slate-950/80 px-3.5 py-1.5 rounded-xl border border-indigo-500/10 shadow-inner text-[11px] w-full sm:w-auto justify-center">
+            <div class="flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+                <span class="text-slate-500 uppercase font-bold tracking-wider">Host:</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1">
+                    <i data-lucide="cpu" class="w-3.5 h-3.5 text-indigo-400"></i>
+                    <span class="text-slate-400">CPU:</span>
+                    <span id="cpu-stat" class="font-bold text-slate-200">--%</span>
+                </div>
+                <div class="flex items-center gap-1 border-l border-slate-800 pl-3">
+                    <i data-lucide="hard-drive" class="w-3.5 h-3.5 text-purple-400"></i>
+                    <span class="text-slate-400">RAM:</span>
+                    <span id="ram-stat" class="font-bold text-slate-200">--%</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-6xl w-full mx-auto px-4 mt-6 grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+        
+        <!-- Left Side: Inputs & Scanning (4 cols on desktop) -->
+        <section class="md:col-span-5 flex flex-col gap-6 w-full">
+            <div class="glass-card rounded-2xl p-5 glow-indigo glow-neon-border">
+                <h2 class="text-sm uppercase font-bold tracking-wider text-slate-300 mb-4 flex items-center gap-2">
+                    <i data-lucide="aperture" class="text-indigo-400 w-4 h-4"></i> Media input console
+                </h2>
+                
+                <!-- Tab switcher -->
+                <div class="flex border-b border-indigo-500/10 mb-4 text-xs font-semibold">
+                    <button id="tab-upload" class="flex-1 pb-2.5 text-center border-b-2 border-indigo-500 text-indigo-400 focus:outline-none transition-all duration-300">
+                        Upload Image
+                    </button>
+                    <button id="tab-webcam" class="flex-1 pb-2.5 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 focus:outline-none transition-all duration-300">
+                        Camera Stream
+                    </button>
+                </div>
+
+                <!-- Upload Tab -->
+                <div id="content-upload" class="block space-y-4">
+                    <div id="drop-zone" class="border border-dashed border-indigo-500/20 hover:border-indigo-400 rounded-xl p-6 md:p-8 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 bg-indigo-950/5 hover:bg-indigo-950/20 group relative overflow-hidden">
+                        <input type="file" id="file-input" class="hidden" accept="image/*">
+                        <div class="p-3 bg-slate-900 border border-indigo-500/15 rounded-full text-slate-400 group-hover:text-indigo-400 group-hover:border-indigo-500/40 shadow-md group-hover:shadow-[0_0_15px_rgba(99,102,241,0.2)] transition-all duration-300 mb-3">
+                            <i data-lucide="cloud-upload" class="w-6 h-6"></i>
+                        </div>
+                        <p class="text-xs font-semibold text-slate-200">Drag and drop file here</p>
+                        <p class="text-[10px] text-slate-500 mt-1">Supports JPEG, PNG, WebP</p>
+                        <span class="mt-4 px-3 py-1.5 bg-slate-900/80 text-[10px] font-bold tracking-wider uppercase rounded-lg text-indigo-300 border border-indigo-500/20 group-hover:border-indigo-400/50 transition-all duration-300">Browse Image</span>
+                    </div>
+                </div>
+
+                <!-- Camera Stream Tab -->
+                <div id="content-webcam" class="hidden space-y-4">
+                    <div class="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-slate-950 border border-indigo-500/15 flex items-center justify-center shadow-inner">
+                        <video id="webcam-preview" class="hidden w-full h-full object-cover" autoplay playsinline></video>
+                        
+                        <div id="webcam-placeholder" class="text-center p-6 space-y-3">
+                            <div class="mx-auto w-10 h-10 bg-slate-900 border border-indigo-500/10 text-slate-500 rounded-full flex items-center justify-center">
+                                <i data-lucide="camera" class="w-5 h-5"></i>
+                            </div>
+                            <p class="text-xs text-slate-400 font-medium">Camera hardware is offline</p>
+                            <button id="btn-start-camera" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 hover:shadow-[0_0_10px_rgba(99,102,241,0.4)] text-[10px] uppercase font-bold tracking-wider rounded-lg text-white transition-all duration-300 flex items-center gap-1.5 mx-auto">
+                                <i data-lucide="power" class="w-3.5 h-3.5"></i> Activate Camera
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-2">
+                        <button id="btn-capture" disabled class="flex-grow py-2 bg-indigo-600 disabled:bg-slate-900 disabled:text-slate-600 hover:bg-indigo-500 active:bg-indigo-700 text-xs font-bold uppercase tracking-wider rounded-lg text-white transition-all duration-300 flex items-center justify-center gap-1.5 shadow-md">
+                            <i data-lucide="scan" class="w-4 h-4"></i> Capture and Scan
+                        </button>
+                        <button id="btn-stop-camera" class="px-3 py-2 bg-slate-950 hover:bg-slate-900 hover:text-rose-400 text-slate-500 border border-indigo-500/10 rounded-lg transition-all duration-300 flex items-center justify-center">
+                            <i data-lucide="video-off" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hidden elements -->
+            <canvas id="snapshot-canvas" class="hidden"></canvas>
+
+            <!-- Loading Scanner Console -->
+            <div id="loader-card" class="hidden glass-card rounded-2xl p-5 space-y-4 animate-pulse border-emerald-500/20">
+                <!-- Mini scan window representing visual capture -->
+                <div class="relative w-full aspect-[16/10] rounded-lg overflow-hidden bg-slate-950 border border-emerald-500/25 flex items-center justify-center">
+                    <img id="loader-image-preview" class="w-full h-full object-contain opacity-40 filter blur-[1px]" src="" alt="Scanning Preview">
+                    <div class="scanner-line"></div>
+                    <div class="absolute inset-0 bg-slate-950/20"></div>
+                    <div class="absolute bottom-2 left-2 px-2 py-1 rounded bg-slate-900/95 border border-emerald-500/20 text-[9px] text-emerald-400 font-mono tracking-wider">
+                        SCAN_SYS: IN_PROGRESS
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 border-2 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin"></div>
+                    <div>
+                        <h3 class="text-xs uppercase font-extrabold tracking-widest text-emerald-400">Processing appraisal</h3>
+                        <p class="text-[10px] text-slate-500 font-mono">TASK_ID: ANALYZE_HYBRID_FLOW</p>
+                    </div>
+                </div>
+                
+                <!-- Micro Timeline steps -->
+                <div class="space-y-3.5 text-[10px] font-semibold border-l border-indigo-500/10 ml-4 pl-4 relative font-mono">
+                    <div class="relative">
+                        <span id="step-yolo-dot" class="absolute -left-[21px] top-1 w-1.5 h-1.5 rounded-full bg-emerald-500 ring-2 ring-emerald-500/30"></span>
+                        <p id="step-yolo-text" class="text-emerald-400">1. LOCAL_CPU_YOLOV8_OBJECT_DETECT</p>
+                    </div>
+                    <div class="relative">
+                        <span id="step-gemini-dot" class="absolute -left-[21px] top-1 w-1.5 h-1.5 rounded-full bg-slate-800"></span>
+                        <p id="step-gemini-text" class="text-slate-600">2. CLOUD_GEMINI_VLM_WEAR_INSPECTION</p>
+                    </div>
+                    <div class="relative">
+                        <span id="step-sklearn-dot" class="absolute -left-[21px] top-1 w-1.5 h-1.5 rounded-full bg-slate-800"></span>
+                        <p id="step-sklearn-text" class="text-slate-600">3. LOCAL_PRICE_FORECAST_REGRESSION</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Error console panel -->
+            <div id="error-card" class="hidden bg-rose-950/30 border border-rose-500/25 rounded-2xl p-4 flex items-start gap-3">
+                <div class="text-rose-400 p-2 bg-rose-500/10 border border-rose-500/20 rounded-lg flex-shrink-0">
+                    <i data-lucide="terminal" class="w-4 h-4"></i>
+                </div>
+                <div class="space-y-0.5 font-mono">
+                    <h3 class="text-xs uppercase font-bold text-rose-400">API_SYSTEM_EXCEPTION</h3>
+                    <p id="error-message" class="text-[10px] text-rose-300 leading-relaxed"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Side: Results & Dashboard Analytics (7 cols on desktop) -->
+        <section id="results-section" class="md:col-span-7 flex flex-col gap-6 w-full hidden">
+            
+            <!-- Price valuation & product badge -->
+            <div class="glass-card rounded-2xl overflow-hidden glow-green glass-card-accent fade-in-up">
+                
+                <div class="p-5 border-b border-indigo-500/15 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900/40">
+                    <div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span id="result-category" class="px-2 py-0.5 bg-indigo-500/20 border border-indigo-500/35 text-indigo-300 text-[9px] font-bold rounded-md uppercase tracking-widest">Category</span>
+                            <span id="result-brand" class="text-md font-bold text-slate-100">Brand</span>
+                        </div>
+                        <h2 id="result-model" class="text-lg font-black text-white mt-0.5 tracking-tight">Model Name</h2>
+                    </div>
+                    
+                    <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-4 py-2.5 flex items-center gap-3 w-full sm:w-auto shadow-sm">
+                        <i data-lucide="wallet" class="w-5 h-5 text-emerald-400 flex-shrink-0"></i>
+                        <div>
+                            <span class="block text-[8px] uppercase font-bold text-slate-400 tracking-widest leading-none">Est. Second-Hand Value</span>
+                            <span id="result-est-price" class="text-lg font-black text-emerald-400">₹0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bounding Box Visual & Metrics split grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 border-b border-indigo-500/15">
+                    <!-- Left: YOLOv8 drawing -->
+                    <div class="bg-slate-950 aspect-[4/3] sm:aspect-square flex items-center justify-center relative overflow-hidden border-b sm:border-b-0 sm:border-r border-indigo-500/15">
+                        <img id="result-annotated-img" class="w-full h-full object-contain" src="" alt="Object detected">
+                        <div class="absolute bottom-2 left-2 bg-slate-900/90 border border-indigo-500/15 px-2 py-1 rounded-lg text-[9px] text-slate-400 font-mono tracking-wider flex items-center gap-1.5">
+                            <i data-lucide="radar" class="w-3.5 h-3.5 text-indigo-400 animate-pulse"></i> YOLOv8 Localizer
+                        </div>
+                    </div>
+
+                    <!-- Right: Parameters list -->
+                    <div class="p-5 space-y-4 bg-slate-900/20 text-xs">
+                        <h3 class="text-[9px] uppercase font-extrabold text-slate-400 tracking-wider font-mono">REGRESSION_MATRICES</h3>
+                        
+                        <div class="space-y-3.5 font-medium">
+                            <div class="flex justify-between items-center py-1 border-b border-indigo-500/5">
+                                <span class="text-slate-500">Mfg Year / Age</span>
+                                <span class="font-bold text-slate-200" id="result-age">2021 (5.0 yrs old)</span>
+                            </div>
+                            <div class="flex justify-between items-center py-1 border-b border-indigo-500/5">
+                                <span class="text-slate-500">Original retail value</span>
+                                <span class="font-bold text-slate-200" id="result-orig-price">₹0.00</span>
+                            </div>
+                            <div class="flex justify-between items-center py-1 border-b border-indigo-500/5">
+                                <span class="text-slate-500">Brand market tier</span>
+                                <span class="font-bold text-slate-200" id="result-brand-tier">Mid-Range</span>
+                            </div>
+                            <div class="flex justify-between items-center py-1 border-b border-indigo-500/5">
+                                <span class="text-slate-500">ML value coefficient</span>
+                                <span class="font-bold text-emerald-400" id="result-deprec-ratio">100.0%</span>
+                            </div>
+                            <div class="flex justify-between items-center py-1">
+                                <span class="text-slate-500">YOLO classifier match</span>
+                                <span class="font-bold text-slate-200" id="result-yolo-match">laptop (98%)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Explanation -->
+                <div class="p-5 bg-slate-950/30">
+                    <h3 class="text-[9px] uppercase font-extrabold text-slate-400 tracking-wider mb-2 flex items-center gap-1.5 font-mono">
+                        <i data-lucide="cpu" class="w-3.5 h-3.5 text-indigo-400"></i> visual diagnostics report
+                    </h3>
+                    <p id="result-explanation" class="text-xs text-slate-300 leading-relaxed text-justify"></p>
+                </div>
+            </div>
+
+            <!-- Wear Score & Checklist Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-6 fade-in-up" style="animation-delay: 0.15s;">
+                
+                <!-- Wear index radial gauge (4 cols) -->
+                <div class="sm:col-span-4 glass-card rounded-2xl p-5 flex flex-col items-center justify-center text-center glow-indigo">
+                    <h3 class="text-[9px] uppercase font-extrabold text-slate-400 tracking-wider mb-3 font-mono">WEAR_INDEX</h3>
+                    
+                    <div class="relative w-24 h-24 flex items-center justify-center">
+                        <svg class="w-full h-full transform -rotate-90">
+                            <circle class="text-slate-900 border border-indigo-500/5" stroke-width="6" stroke="currentColor" fill="transparent" r="40" cx="48" cy="48" />
+                            <circle id="wear-score-circle" class="text-indigo-500 transition-all duration-1000 ease-out" stroke-width="6" stroke-dasharray="251" stroke-dashoffset="251" stroke-linecap="round" stroke="currentColor" fill="transparent" r="40" cx="48" cy="48" />
+                        </svg>
+                        <div class="absolute flex flex-col items-center justify-center">
+                            <span id="result-wear-score" class="text-xl font-black text-white">0.0</span>
+                            <span class="text-[8px] text-slate-500 uppercase">max 10.0</span>
+                        </div>
+                    </div>
+                    
+                    <span id="result-wear-desc" class="mt-4 px-2 py-1 bg-slate-950 text-[9px] font-bold rounded-lg text-indigo-300 border border-indigo-500/10 uppercase tracking-widest">Good Condition</span>
+                </div>
+
+                <!-- Defects checkoff list (8 cols) -->
+                <div class="sm:col-span-8 glass-card rounded-2xl p-5 glow-indigo">
+                    <h3 class="text-[9px] uppercase font-extrabold text-slate-400 tracking-wider mb-3 font-mono">ANOMALIES_INVENTORY</h3>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        <!-- Scratches -->
+                        <div class="p-2.5 bg-slate-950/40 rounded-xl border border-indigo-500/5 flex items-start gap-2.5">
+                            <span id="badge-scratches" class="p-1 rounded bg-indigo-500/10 border border-indigo-500/15">
+                                <i data-lucide="minus" class="w-3.5 h-3.5"></i>
+                            </span>
+                            <div class="space-y-0.5">
+                                <span class="block text-[11px] font-bold text-slate-200 uppercase tracking-wider">Scratches</span>
+                                <span id="details-scratches" class="block text-[10px] text-slate-400">None detected</span>
+                            </div>
+                        </div>
+
+                        <!-- Dents -->
+                        <div class="p-2.5 bg-slate-950/40 rounded-xl border border-indigo-500/5 flex items-start gap-2.5">
+                            <span id="badge-dents" class="p-1 rounded bg-indigo-500/10 border border-indigo-500/15">
+                                <i data-lucide="minus" class="w-3.5 h-3.5"></i>
+                            </span>
+                            <div class="space-y-0.5">
+                                <span class="block text-[11px] font-bold text-slate-200 uppercase tracking-wider">Dents & Folds</span>
+                                <span id="details-dents" class="block text-[10px] text-slate-400">None detected</span>
+                            </div>
+                        </div>
+
+                        <!-- Cracks -->
+                        <div class="p-2.5 bg-slate-950/40 rounded-xl border border-indigo-500/5 flex items-start gap-2.5">
+                            <span id="badge-cracks" class="p-1 rounded bg-indigo-500/10 border border-indigo-500/15">
+                                <i data-lucide="minus" class="w-3.5 h-3.5"></i>
+                            </span>
+                            <div class="space-y-0.5">
+                                <span class="block text-[11px] font-bold text-slate-200 uppercase tracking-wider">Cracks</span>
+                                <span id="details-cracks" class="block text-[10px] text-slate-400">None detected</span>
+                            </div>
+                        </div>
+
+                        <!-- Rust -->
+                        <div class="p-2.5 bg-slate-950/40 rounded-xl border border-indigo-500/5 flex items-start gap-2.5">
+                            <span id="badge-rust" class="p-1 rounded bg-indigo-500/10 border border-indigo-500/15">
+                                <i data-lucide="minus" class="w-3.5 h-3.5"></i>
+                            </span>
+                            <div class="space-y-0.5">
+                                <span class="block text-[11px] font-bold text-slate-200 uppercase tracking-wider">Rust & Oxidation</span>
+                                <span id="details-rust" class="block text-[10px] text-slate-400">None detected</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Other wear -->
+                    <div class="mt-3.5 p-2.5 bg-indigo-950/15 rounded-xl border border-indigo-500/10 text-[10px]">
+                        <span class="block font-bold text-indigo-300 uppercase tracking-wider flex items-center gap-1">
+                            <i data-lucide="layers" class="w-3.5 h-3.5"></i> Secondary Wear Notes
+                        </span>
+                        <p id="details-other" class="text-slate-400 mt-1">No secondary aesthetic anomalies logged.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- JS Logic -->
+    <script>
+        // Init Lucide
+        lucide.createIcons();
+
+        // DOM elements
+        const tabUpload = document.getElementById('tab-upload');
+        const tabWebcam = document.getElementById('tab-webcam');
+        const contentUpload = document.getElementById('content-upload');
+        const contentWebcam = document.getElementById('content-webcam');
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+
+        const webcamPreview = document.getElementById('webcam-preview');
+        const webcamPlaceholder = document.getElementById('webcam-placeholder');
+        const btnStartCamera = document.getElementById('btn-start-camera');
+        const btnCapture = document.getElementById('btn-capture');
+        const btnStopCamera = document.getElementById('btn-stop-camera');
+        const snapshotCanvas = document.getElementById('snapshot-canvas');
+
+        const loaderCard = document.getElementById('loader-card');
+        const loaderImagePreview = document.getElementById('loader-image-preview');
+        const errorCard = document.getElementById('error-card');
+        const errorMessage = document.getElementById('error-message');
+        const resultsSection = document.getElementById('results-section');
+
+        // Loading steps
+        const stepYoloDot = document.getElementById('step-yolo-dot');
+        const stepYoloText = document.getElementById('step-yolo-text');
+        const stepGeminiDot = document.getElementById('step-gemini-dot');
+        const stepGeminiText = document.getElementById('step-gemini-text');
+        const stepSklearnDot = document.getElementById('step-sklearn-dot');
+        const stepSklearnText = document.getElementById('step-sklearn-text');
+
+        // Results
+        const resCategory = document.getElementById('result-category');
+        const resBrand = document.getElementById('result-brand');
+        const resModel = document.getElementById('result-model');
+        const resEstPrice = document.getElementById('result-est-price');
+        const resAnnotatedImg = document.getElementById('result-annotated-img');
+        const resAge = document.getElementById('result-age');
+        const resOrigPrice = document.getElementById('result-orig-price');
+        const resBrandTier = document.getElementById('result-brand-tier');
+        const resDeprecRatio = document.getElementById('result-deprec-ratio');
+        const resYoloMatch = document.getElementById('result-yolo-match');
+        const resExplanation = document.getElementById('result-explanation');
+        const resWearScore = document.getElementById('result-wear-score');
+        const resWearDesc = document.getElementById('result-wear-desc');
+        const wearScoreCircle = document.getElementById('wear-score-circle');
+
+        // Anomalies
+        const badgeScratches = document.getElementById('badge-scratches');
+        const detailsScratches = document.getElementById('details-scratches');
+        const badgeDents = document.getElementById('badge-dents');
+        const detailsDents = document.getElementById('details-dents');
+        const badgeCracks = document.getElementById('badge-cracks');
+        const detailsCracks = document.getElementById('details-cracks');
+        const badgeRust = document.getElementById('badge-rust');
+        const detailsRust = document.getElementById('details-rust');
+        const detailsOther = document.getElementById('details-other');
+
+        let cameraStream = null;
+
+        // Tabs navigation
+        tabUpload.addEventListener('click', () => {
+            tabUpload.classList.add('border-indigo-500', 'text-indigo-400');
+            tabUpload.classList.remove('border-transparent', 'text-slate-400');
+            tabWebcam.classList.remove('border-indigo-500', 'text-indigo-400');
+            tabWebcam.classList.add('border-transparent', 'text-slate-400');
+            contentUpload.classList.remove('hidden');
+            contentWebcam.classList.add('hidden');
+            stopCamera();
+        });
+
+        tabWebcam.addEventListener('click', () => {
+            tabWebcam.classList.add('border-indigo-500', 'text-indigo-400');
+            tabWebcam.classList.remove('border-transparent', 'text-slate-400');
+            tabUpload.classList.remove('border-indigo-500', 'text-indigo-400');
+            tabUpload.classList.add('border-transparent', 'text-slate-400');
+            contentWebcam.classList.remove('hidden');
+            contentUpload.classList.add('hidden');
+        });
+
+        // Drag and drop
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('border-indigo-400', 'bg-indigo-950/20');
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('border-indigo-400', 'bg-indigo-950/20');
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-indigo-400', 'bg-indigo-950/20');
+            if (e.dataTransfer.files.length > 0) {
+                const file = e.dataTransfer.files[0];
+                showLoaderImagePreview(file);
+                analyzeFile(file);
+            }
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                const file = e.target.files[0];
+                showLoaderImagePreview(file);
+                analyzeFile(file);
+            }
+        });
+
+        // Show image thumbnail in scanner box
+        function showLoaderImagePreview(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                loaderImagePreview.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // System monitor update
+        function updateSystemStats() {
+            fetch('/stats')
+                .then(r => r.json())
+                .then(data => {
+                    if (data && !data.error) {
+                        document.getElementById('cpu-stat').textContent = `${data.cpu_usage_percent.toFixed(1)}%`;
+                        document.getElementById('ram-stat').textContent = `${data.ram_usage_percent.toFixed(1)}%`;
+                    }
+                })
+                .catch(() => {
+                    document.getElementById('cpu-stat').textContent = 'Error';
+                    document.getElementById('ram-stat').textContent = 'Offline';
+                });
+        }
+        setInterval(updateSystemStats, 3000);
+        updateSystemStats();
+
+        // Camera stream controls
+        async function startCamera() {
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment', width: { ideal: 1024 }, height: { ideal: 768 } },
+                    audio: false
+                });
+                webcamPreview.srcObject = cameraStream;
+                webcamPreview.classList.remove('hidden');
+                webcamPlaceholder.classList.add('hidden');
+                btnCapture.disabled = false;
+            } catch (err) {
+                alert(`Camera stream error: ${err.message}. Check browser permissions.`);
+            }
+        }
+
+        function stopCamera() {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+            }
+            webcamPreview.srcObject = null;
+            webcamPreview.classList.add('hidden');
+            webcamPlaceholder.classList.remove('hidden');
+            btnCapture.disabled = true;
+        }
+
+        btnStartCamera.addEventListener('click', startCamera);
+        btnStopCamera.addEventListener('click', stopCamera);
+
+        btnCapture.addEventListener('click', () => {
+            if (!cameraStream) return;
+            
+            snapshotCanvas.width = webcamPreview.videoWidth;
+            snapshotCanvas.height = webcamPreview.videoHeight;
+            const ctx = snapshotCanvas.getContext('2d');
+            ctx.drawImage(webcamPreview, 0, 0, snapshotCanvas.width, snapshotCanvas.height);
+            
+            const base64Data = snapshotCanvas.toDataURL('image/jpeg', 0.85);
+            loaderImagePreview.src = base64Data; // Set webcam snapshot as the scan visual
+            stopCamera();
+            analyzeBase64(base64Data);
+        });
+
+        // Set loader states dynamically
+        function setLoaderState(stage) {
+            loaderCard.classList.remove('hidden');
+            errorCard.classList.add('hidden');
+            resultsSection.classList.add('hidden');
+
+            [stepYoloDot, stepGeminiDot, stepSklearnDot].forEach(dot => {
+                dot.className = "absolute -left-[21px] top-1 w-1.5 h-1.5 rounded-full bg-slate-800";
+            });
+            [stepYoloText, stepGeminiText, stepSklearnText].forEach(text => {
+                text.className = "text-slate-600";
+            });
+
+            if (stage === 'yolo') {
+                stepYoloDot.className = "absolute -left-[21px] top-1 w-1.5 h-1.5 rounded-full bg-emerald-500 ring-2 ring-emerald-500/30";
+                stepYoloText.className = "text-emerald-400 font-bold";
+            } else if (stage === 'gemini') {
+                stepYoloDot.className = "absolute -left-[21px] top-1 w-1.5 h-1.5 rounded-full bg-emerald-600";
+                stepYoloText.className = "text-slate-400";
+                
+                stepGeminiDot.className = "absolute -left-[21px] top-1 w-1.5 h-1.5 rounded-full bg-emerald-500 ring-2 ring-emerald-500/30";
+                stepGeminiText.className = "text-emerald-400 font-bold";
+            } else if (stage === 'sklearn') {
+                stepYoloDot.className = "absolute -left-[21px] top-1 w-1.5 h-1.5 rounded-full bg-emerald-600";
+                stepYoloText.className = "text-slate-400";
+                
+                stepGeminiDot.className = "absolute -left-[21px] top-1 w-1.5 h-1.5 rounded-full bg-emerald-600";
+                stepGeminiText.className = "text-slate-400";
+
+                stepSklearnDot.className = "absolute -left-[21px] top-1 w-1.5 h-1.5 rounded-full bg-emerald-500 ring-2 ring-emerald-500/30";
+                stepSklearnText.className = "text-emerald-400 font-bold";
+            }
+        }
+
+        async function analyzeFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            setLoaderState('yolo');
+            setTimeout(() => setLoaderState('gemini'), 800);
+            setTimeout(() => setLoaderState('sklearn'), 2200);
+
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.detail || result.error || 'Server error occurred.');
+                }
+                
+                renderResults(result);
+            } catch (err) {
+                showError(err.message);
+            }
+        }
+
+        async function analyzeBase64(base64Data) {
+            setLoaderState('yolo');
+            setTimeout(() => setLoaderState('gemini'), 700);
+            setTimeout(() => setLoaderState('sklearn'), 1800);
+
+            try {
+                const response = await fetch('/analyze-base64', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image_base64: base64Data })
+                });
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.detail || result.error || 'Server error occurred.');
+                }
+                
+                renderResults(result);
+            } catch (err) {
+                showError(err.message);
+            }
+        }
+
+        function showError(msg) {
+            loaderCard.classList.add('hidden');
+            errorCard.classList.remove('hidden');
+            resultsSection.classList.add('hidden');
+            errorMessage.textContent = msg;
+        }
+
+        function getSeverityStyles(severity) {
+            const sev = severity.toLowerCase();
+            if (sev === 'none') {
+                return {
+                    badgeClass: 'p-1 rounded bg-emerald-500/10 border border-emerald-500/25 text-emerald-400',
+                    icon: 'check-circle'
+                };
+            } else if (sev === 'minor') {
+                return {
+                    badgeClass: 'p-1 rounded bg-yellow-500/10 border border-yellow-500/25 text-yellow-400',
+                    icon: 'alert-circle'
+                };
+            } else if (sev === 'moderate') {
+                return {
+                    badgeClass: 'p-1 rounded bg-orange-500/10 border border-orange-500/25 text-orange-400',
+                    icon: 'alert-triangle'
+                };
+            } else if (sev === 'severe') {
+                return {
+                    badgeClass: 'p-1 rounded bg-rose-500/10 border border-rose-500/25 text-rose-400',
+                    icon: 'alert-octagon'
+                };
+            }
+            return {
+                badgeClass: 'p-1 rounded bg-slate-900 border border-indigo-500/10 text-slate-500',
+                icon: 'minus'
+            };
+        }
+
+        function updateAnomalyCard(elementId, badgeId, anomalyObj) {
+            const detailsElement = document.getElementById(elementId);
+            const badgeElement = document.getElementById(badgeId);
+            const style = getSeverityStyles(anomalyObj.severity);
+            
+            badgeElement.className = style.badgeClass;
+            badgeElement.innerHTML = `<i data-lucide="${style.icon}" class="w-3.5 h-3.5"></i>`;
+            detailsElement.textContent = anomalyObj.details || 'No structural anomalies.';
+        }
+
+        function renderResults(data) {
+            loaderCard.classList.add('hidden');
+            errorCard.classList.add('hidden');
+            resultsSection.classList.remove('hidden');
+
+            resCategory.textContent = data.final_category;
+            resBrand.textContent = data.brand;
+            resModel.textContent = data.model;
+            
+            const formatRupees = (val) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val);
+            resEstPrice.textContent = formatRupees(data.estimated_price_in_rupees);
+            resOrigPrice.textContent = formatRupees(data.original_price_in_rupees);
+            
+            resAge.textContent = `${data.estimated_mfg_year} (${data.age_years.toFixed(1)} yrs old)`;
+            
+            const tierNames = ["Budget Segment", "Popular / Mid-Range", "Premium & Luxury"];
+            resBrandTier.textContent = tierNames[Math.min(2, Math.max(0, data.brand_tier - 1))];
+            
+            resDeprecRatio.textContent = `${(data.depreciation_ratio * 100).toFixed(1)}% (${((1 - data.depreciation_ratio) * 100).toFixed(1)}% Depreciation)`;
+
+            if (data.yolo_detections && data.yolo_detections.length > 0) {
+                const mainMatch = data.yolo_detections[0];
+                resYoloMatch.textContent = `${mainMatch.label} (${mainMatch.confidence}%)`;
+            } else {
+                resYoloMatch.textContent = 'No local match (LLM fallback)';
+            }
+
+            if (data.annotated_image) {
+                resAnnotatedImg.src = `data:image/jpeg;base64,${data.annotated_image}`;
+            } else {
+                resAnnotatedImg.src = '';
+            }
+
+            resExplanation.textContent = data.explanation;
+
+            const score = data.wear_score;
+            resWearScore.textContent = score.toFixed(1);
+            
+            let wearDesc = "Like New / Pristine";
+            if (score > 1.5 && score <= 3.5) wearDesc = "Good / Minor Wear";
+            else if (score > 3.5 && score <= 6.5) wearDesc = "Fair / Moderate Wear";
+            else if (score > 6.5 && score <= 8.5) wearDesc = "Poor / Heavy Damage";
+            else if (score > 8.5) wearDesc = "Scrap / Broken Value";
+            resWearDesc.textContent = wearDesc;
+
+            // Gauge progress circumference calculation (Radius: 40, Circumference: ~251)
+            const circumference = 2 * Math.PI * 40;
+            const offset = circumference - (score / 10.0) * circumference;
+            wearScoreCircle.style.strokeDasharray = circumference;
+            wearScoreCircle.style.strokeDashoffset = offset;
+
+            updateAnomalyCard('details-scratches', 'badge-scratches', data.anomalies.scratches);
+            updateAnomalyCard('details-dents', 'badge-dents', data.anomalies.dents);
+            updateAnomalyCard('details-cracks', 'badge-cracks', data.anomalies.cracks);
+            updateAnomalyCard('details-rust', 'badge-rust', data.anomalies.rust);
+            
+            document.getElementById('details-other').textContent = data.anomalies.other || 'No secondary visual wear reported.';
+
+            lucide.createIcons();
+            
+            resultsSection.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
