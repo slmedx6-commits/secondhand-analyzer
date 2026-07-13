@@ -4,6 +4,14 @@ A hybrid, resource-optimized web application designed to run on consumer hardwar
 
 ---
 
+## 📸 Application Preview
+
+| Futuristic Dashboard (Idle) | Appraisal & Analysis Results |
+| :---: | :---: |
+| ![Dashboard Overview](assets/dashboard.png) | ![Appraisal Scan Result](assets/appraisal_results.png) |
+
+---
+
 ## 🛠️ Technology Stack & Machine Learning Pipelines
 
 1. **Local Object Detection (YOLOv8-nano)**: Detects, highlights, and localizes the item in system memory, returning bounding-box annotated frames.
