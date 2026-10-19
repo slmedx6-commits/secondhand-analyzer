@@ -72,11 +72,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.middleware("http")
+async def normalize_vercel_path(request, call_next):
+    scope = request.scope
+    path = scope.get("path", "")
+    for prefix in ["/api/index.py", "/api/index", "/api"]:
+        if path == prefix:
+            scope["path"] = "/"
+            break
+        elif path.startswith(prefix + "/"):
+            scope["path"] = path[len(prefix):]
+            break
+    response = await call_next(request)
+    return response
+
 # Request schema for base64 uploads (webcam capture)
 class Base64UploadRequest(BaseModel):
     image_base64: str  # Data URL or raw base64 string
 
 @app.get("/stats")
+@app.get("/api/stats")
 async def get_system_stats():
     """
     Get system monitoring stats (CPU & RAM) to present on frontend header.
@@ -109,6 +124,7 @@ async def get_system_stats():
         }
 
 @app.post("/analyze")
+@app.post("/api/analyze")
 async def analyze_file_upload(file: UploadFile = File(...)):
     """
     Receives an uploaded file, runs visual and price analysis, returns report.
@@ -152,6 +168,7 @@ async def analyze_file_upload(file: UploadFile = File(...)):
         )
 
 @app.post("/analyze-base64")
+@app.post("/api/analyze-base64")
 async def analyze_base64_upload(payload: Base64UploadRequest):
     """
     Receives base64 encoded image string (e.g. from client webcam), decodes and analyzes.
@@ -191,6 +208,9 @@ async def analyze_base64_upload(payload: Base64UploadRequest):
         )
 
 @app.get("/", response_class=HTMLResponse)
+@app.get("/api", response_class=HTMLResponse)
+@app.get("/api/index", response_class=HTMLResponse)
+@app.get("/api/index.py", response_class=HTMLResponse)
 async def serve_frontend_page():
     """
     Serves the modern single-page dashboard.
