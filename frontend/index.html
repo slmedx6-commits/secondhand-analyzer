@@ -914,7 +914,11 @@
                 resAnnotatedImg.src = '';
             }
 
-            resExplanation.textContent = data.explanation;
+            if (data.brand === 'Standard Market Brand') {
+                resExplanation.innerHTML = `<span class="text-amber-400 font-semibold block mb-1.5"><i data-lucide="alert-triangle" class="inline w-3.5 h-3.5 mr-1"></i> Live Gemini Vision Inspection Inactive:</span> To detect the exact product model name, official launch year, and inspect specific scratches/dents, click the <strong>API Key</strong> button at the top right to paste your Gemini API Key.`;
+            } else {
+                resExplanation.textContent = data.explanation;
+            }
 
             const score = data.wear_score;
             resWearScore.textContent = score.toFixed(1);
