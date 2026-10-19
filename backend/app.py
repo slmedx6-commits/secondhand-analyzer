@@ -72,19 +72,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.middleware("http")
-async def normalize_vercel_path(request, call_next):
-    scope = request.scope
-    path = scope.get("path", "")
-    for prefix in ["/api/index.py", "/api/index", "/api"]:
-        if path == prefix:
-            scope["path"] = "/"
-            break
-        elif path.startswith(prefix + "/"):
-            scope["path"] = path[len(prefix):]
-            break
-    response = await call_next(request)
-    return response
 
 # Request schema for base64 uploads (webcam capture)
 class Base64UploadRequest(BaseModel):

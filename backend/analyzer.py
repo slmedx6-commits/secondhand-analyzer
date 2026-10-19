@@ -210,10 +210,10 @@ def analyze_item(image_bytes: bytes) -> dict:
             annotated_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
             logger.info("No objects detected locally by YOLOv8.")
             
-        # 2. Prepare Gemini 3.5 Flash Visual-Language Model Analysis
-        gemini_api_key = os.getenv("GEMINI_API_KEY")
+        # 2. Prepare Gemini Visual-Language Model Analysis
+        gemini_api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
         if not gemini_api_key:
-            raise ValueError("GEMINI_API_KEY is not configured. Please set the API key in settings or environment.")
+            raise ValueError("GEMINI_API_KEY is not configured. Please set the API key in your Vercel or environment settings.")
             
         genai.configure(api_key=gemini_api_key)
         
@@ -254,12 +254,19 @@ def analyze_item(image_bytes: bytes) -> dict:
             "temperature": 0.2
         }
         
-        logger.info("Invoking Gemini 3.5 Flash...")
-        model = genai.GenerativeModel('gemini-3.5-flash', generation_config=generation_config)
-        
-        response = model.generate_content(
-            contents=[system_prompt, pil_image]
-        )
+        logger.info("Invoking Gemini with fallback models...")
+        response = None
+        for model_name in ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro', 'gemini-flash-latest']:
+            try:
+                model = genai.GenerativeModel(model_name, generation_config=generation_config)
+                response = model.generate_content(contents=[system_prompt, pil_image])
+                logger.info(f"Successfully generated content using {model_name}")
+                break
+            except Exception as me:
+                logger.warning(f"Model {model_name} failed: {me}. Trying next fallback...")
+                
+        if response is None:
+            raise RuntimeError("Gemini API call failed across all model tiers. Please check API quota or network connection.")
         
         gemini_result = {}
         try:
