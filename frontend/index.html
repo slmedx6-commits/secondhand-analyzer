@@ -794,63 +794,46 @@
         }
 
         // Direct Client Edge Gemini VLM Call (Zero Server Load, Zero Crashes, Free)
-        // Direct Client Edge Gemini VLM Call (Zero Server Load, Zero Crashes, Free)
         async function callGeminiDirectEdge(base64Image, apiKey) {
             const cleanBase64 = base64Image.includes(',') ? base64Image.split(',')[1] : base64Image;
-            const systemPrompt = `You are an elite forensic condition inspector and expert valuation appraiser for the Indian second-hand market (Cashify, OLX India, Spinny, Cars24, and CeX standards).
+            const systemPrompt = `You are an elite forensic condition inspector and expert valuation appraiser for the Indian market (expert in Cashify, OLX India, Spinny, Cars24, and CeX standards).
 The reference calendar year is 2026. Calculate product age using 2026.
 
-CRITICAL PRODUCT IDENTIFICATION & VALUATION RULES:
-1. IDENTIFY THE EXACT ITEM & DEVICE SCALE:
-   - Accurately determine what the object is and its proper tier:
-     * Small Gadget / Accessory: Earbuds / TWS, smartwatches, fitness bands, PC mice, keyboards, chargers, cables, power banks, remotes, small Bluetooth speakers, calculators, phone cases, adapters.
-     * Budget Smartphone: Redmi, Realme, Poco, Vivo Y-series, Oppo A-series, Samsung M/F-series, Moto G-series, Infinix, Tecno.
-     * Mid-to-Flagship Smartphone: iPhone, Galaxy S/Z, OnePlus, Pixel.
-     * Tablet / iPad.
-     * Laptop / PC / Monitor.
-     * Vehicle (Two-wheeler / Car).
-     * Furniture / Home / Other.
-   - DO NOT confuse small accessories, earbuds, smartwatches, or mice with laptops or flagships!
-   - State the exact brand and model (e.g. "boAt Airdopes 141", "Logitech B100 Mouse", "Redmi Note 10 Pro", "Noise ColorFit Pulse", "Apple iPhone 13 128GB").
+CRITICAL PRODUCT IDENTIFICATION & AUTHENTIC MANUFACTURING VALUE RULES:
+1. IDENTIFY THE EXACT ITEM CAREFULLY:
+   - Carefully inspect visual branding, badges, sensor modules, port layouts, build materials, and finish.
+   - State the exact brand, series, and specific model (e.g. "Apple iPhone 15 Pro Max 256GB", "Dell XPS 15 9520", "Logitech B100 Wired Mouse", "boAt Airdopes 141", "Sony WH-1000XM5", "Royal Enfield Classic 350", "Samsung Galaxy S24 Ultra", "Logitech MX Master 3S").
+   - Set device_class to: "Small Gadget / Accessory", "Budget Smartphone", "Mid-to-Flagship Smartphone", "Tablet", "Laptop / PC", "Audio / Headphones", "Watch / Wearable", "Vehicle", "Furniture", or "Other".
 
 2. OFFICIAL MANUFACTURING / LAUNCH YEAR:
-   - Identify the official commercial launch/mfg year for this exact model (e.g. iPhone 11 was launched in 2019, iPhone 13 in 2021, Redmi Note 10 in 2021, boAt Airdopes 141 in 2021).
-   - Set age_years = (2026 - estimated_mfg_year).
+   - Identify the authentic official commercial launch or manufacturing year for this specific item model.
+   - Set age_years = max(0.2, 2026 - estimated_mfg_year).
 
-3. REALISTIC ORIGINAL RETAIL PRICE (INR ₹):
-   - Ground the original price in realistic Indian launch retail MRP:
-     * Small accessories, mice, budget earphones: ₹400 - ₹2,500
-     * Smartwatches / TWS: ₹1,200 - ₹4,500 (premium smartwatches like Apple Watch: ₹25,000 - ₹45,000)
-     * Budget smartphones: ₹6,500 - ₹15,000
-     * Mid-to-flagship smartphones: ₹25,000 - ₹1,10,000
-     * Laptops: ₹30,000 - ₹95,000
-     * Vehicles: ₹50,000 - ₹12,00,000+
-   - NEVER output tens of thousands (like ₹35,000 or ₹50,000) for a small accessory, mouse, earbud, or budget phone!
+3. REAL MANUFACTURING VALUE (ORIGINAL LAUNCH MRP IN INR ₹):
+   - Provide the REAL, AUTHENTIC Indian market retail MRP (manufacturing / launch price) in Indian Rupees (₹) for this specific item:
+     * Low-cost items: show real low-cost retail MRP (e.g. basic mouse: ₹350 - ₹600; budget earbuds: ₹1,200 - ₹2,000; power bank: ₹1,500; phone case: ₹300).
+     * Mid-range items: show real mid-range retail MRP (e.g. budget smartphones: ₹8,000 - ₹18,000; smartwatches: ₹2,500 - ₹25,000; monitors: ₹12,000 - ₹30,000).
+     * Expensive & Flagship items: show real authentic flagship MRP (e.g. flagship phones: ₹60,000 - ₹1,60,000+; laptops: ₹45,000 - ₹1,80,000+; premium audio: ₹25,000 - ₹45,000; vehicles: ₹85,000 - ₹15,00,000+).
+   - NEVER artificially deflate expensive items or inflate cheap items! Report the authentic Indian retail MRP.
 
 4. GRANULAR DEFECT AUDIT (SCRATCHES & DENTS):
-   - Scratches: Rate as 'None', 'Minor' (micro-scratches/hairline), 'Moderate' (visible scratches on screen/chassis), or 'Severe' (deep gouges/peeled paint). Describe visual locations.
+   - Scratches: Rate as 'None', 'Minor' (micro-scratches/hairline), 'Moderate' (visible finish scratches), or 'Severe' (deep gouges/peeled paint). Describe visual locations.
    - Dents: Rate as 'None', 'Minor' (small corner nick/micro-ding), 'Moderate' (noticeable casing dent/panel bend), or 'Severe' (structural chassis deformation). Describe visual locations.
-   - Cracks: Rate as 'None', 'Minor' (hairline crack), 'Moderate' (visible glass/body crack), or 'Severe' (shattered display/broken housing).
+   - Cracks: Rate as 'None', 'Minor' (hairline crack), 'Moderate' (visible glass/casing fissure), or 'Severe' (shattered display/broken housing).
    - Rust: Rate as 'None', 'Minor', 'Moderate', or 'Severe'.
    - Wear Score: Float from 0.0 (pristine/sealed box) to 10.0 (completely broken/scrap).
 
 5. ACCURATE SECOND-HAND RESALE VALUE (INR ₹):
-   - What does this exact item in this specific cosmetic condition realistically fetch today in India on Cashify / OLX / CeX?
-   - Consider the product's age relative to 2026, tech obsolescence, and exact physical defects (scratches, dents, cracks).
-   - For example:
-     * A 3-5 year old budget earbud with scratches realistically sells for ₹200 to ₹400 (NOT ₹20,000!).
-     * A 5-year-old iPhone 13 (2021) with minor wear sells for ₹24,000 to ₹28,000.
-     * An older Redmi phone with scratches and dents sells for ₹2,000 to ₹3,500.
-     * A computer mouse with scratches sells for ₹150 to ₹250.
-   - Resale price MUST NEVER exceed or be close to the original price for used electronics.
+   - What does this exact item in this specific cosmetic condition realistically fetch today in India on Cashify / OLX / Spinny / CeX?
+   - Resale price must be lower than original MRP according to product age relative to 2026 and physical defect deductions.
 
 Return ONLY a raw JSON object conforming exactly to this schema:
 {
-  "device_class": "Small Gadget / Accessory" | "Budget Smartphone" | "Mid-to-Flagship Smartphone" | "Tablet" | "Laptop" | "Vehicle" | "Furniture" | "Other",
-  "brand": "string (e.g. boAt, Apple, Samsung, Logitech, Redmi)",
-  "model": "string (e.g. Airdopes 141, iPhone 13 128GB, B100 Mouse, Note 10 Pro)",
-  "estimated_mfg_year": "string (e.g. 2021)",
-  "age_years": 5.0,
+  "device_class": "Small Gadget / Accessory" | "Budget Smartphone" | "Mid-to-Flagship Smartphone" | "Tablet" | "Laptop / PC" | "Audio / Headphones" | "Watch / Wearable" | "Vehicle" | "Furniture" | "Other",
+  "brand": "string",
+  "model": "string",
+  "estimated_mfg_year": "string",
+  "age_years": float,
   "brand_tier": 1 | 2 | 3,
   "original_price_in_rupees": float,
   "estimated_resale_price_in_rupees": float,
@@ -867,7 +850,7 @@ Return ONLY a raw JSON object conforming exactly to this schema:
   "explanation": "string"
 }`;
 
-            const models = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash-lite'];
+            const models = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.6-flash', 'gemini-3.8-flash', 'gemini-flash-latest'];
             let lastErr = null;
 
             for (const model of models) {
@@ -898,7 +881,8 @@ Return ONLY a raw JSON object conforming exactly to this schema:
                     if (!response.ok) {
                         const errJson = await response.json().catch(() => ({}));
                         const errMsg = errJson?.error?.message || `HTTP ${response.status}`;
-                        lastErr = new Error(`Google API: ${errMsg}`);
+                        lastErr = new Error(`Google API (${model}): ${errMsg}`);
+                        // If quota is exhausted or rate limited, try next model in fallback list
                         continue;
                     }
 
@@ -920,21 +904,26 @@ Return ONLY a raw JSON object conforming exactly to this schema:
             const text = (brandModel + ' ' + (rawDeviceClass || '')).toLowerCase();
 
             // 1. Check Small Gadgets / Accessories first!
-            if (/watch|smartwatch|band|fitbit|earbud|earbuds|airpod|airpods|headphone|headphones|earphone|earphones|tws|buds|neckband|mouse|keyboard|charger|cable|adapter|powerbank|power bank|remote|speaker|soundbar|pendrive|flash drive|mic|microphone|calculator|webcam|case|cover/.test(text)) {
+            if (/earbud|earbuds|airpod|airpods|headphone|headphones|earphone|earphones|tws|buds|neckband|mouse|keyboard|charger|cable|adapter|powerbank|power bank|remote|speaker|soundbar|pendrive|flash drive|mic|microphone|calculator|webcam|case|cover/.test(text)) {
                 return { category: "Accessory", deviceClass: "Small Gadget / Accessory", defaultOrig: 2200 };
             }
 
-            // 2. Tablets
+            // 2. Wearables & Smartwatches
+            if (/watch|smartwatch|band|fitbit|galaxy watch|apple watch/.test(text)) {
+                return { category: "Accessory", deviceClass: "Watch / Wearable", defaultOrig: 4500 };
+            }
+
+            // 3. Tablets
             if (/tablet|ipad|tab\b|galaxy tab|pad\b/.test(text) && !/laptop|thinkpad/.test(text)) {
                 return { category: "Tablet", deviceClass: "Tablet", defaultOrig: 24000 };
             }
 
-            // 3. Laptops & Computers
+            // 4. Laptops & Computers
             if (/laptop|macbook|notebook|chromebook|thinkpad|zenbook|ideapad|pavilion|inspiron|desktop|cpu cabinet|monitor/.test(text)) {
-                return { category: "Laptop", deviceClass: "Laptop / PC", defaultOrig: 45000 };
+                return { category: "Laptop", deviceClass: "Laptop / PC", defaultOrig: 55000 };
             }
 
-            // 4. Vehicles
+            // 5. Vehicles
             if (/car\b|swift|maruti|hyundai|honda city|honda civic|creta|baleno|innova|fortuner|wagonr|alto|sedan|suv|hatchback|truck|bus/.test(text)) {
                 return { category: "Car", deviceClass: "Vehicle", defaultOrig: 550000 };
             }
@@ -942,15 +931,15 @@ Return ONLY a raw JSON object conforming exactly to this schema:
                 return { category: "Bike", deviceClass: "Vehicle", defaultOrig: 85000 };
             }
 
-            // 5. Smartphones: Distinguish Budget vs Mid/Flagship
+            // 6. Smartphones: Distinguish Budget vs Mid/Flagship
             if (/redmi|realme|poco|infinix|tecno|narzo|galaxy m|galaxy f|galaxy a\d\d|vivo y|oppo a|moto g|nokia 1|nokia 2|nokia 3/.test(text)) {
-                return { category: "Phone", deviceClass: "Budget Smartphone", defaultOrig: 11000 };
+                return { category: "Phone", deviceClass: "Budget Smartphone", defaultOrig: 12000 };
             }
             if (/iphone|samsung|galaxy s|galaxy z|pixel|oneplus|vivo x|oppo find|flagship|mobile|smartphone|phone/.test(text)) {
-                return { category: "Phone", deviceClass: "Mid-to-Flagship Phone", defaultOrig: 45000 };
+                return { category: "Phone", deviceClass: "Mid-to-Flagship Phone", defaultOrig: 48000 };
             }
 
-            // 6. Furniture & Home
+            // 7. Furniture & Home
             if (/chair|sofa|table|bed|desk|furniture|couch|wardrobe|cupboard/.test(text)) {
                 return { category: "Furniture", deviceClass: "Furniture", defaultOrig: 10000 };
             }
@@ -958,7 +947,7 @@ Return ONLY a raw JSON object conforming exactly to this schema:
                 return { category: "House", deviceClass: "Real Estate", defaultOrig: 4000000 };
             }
 
-            return { category: "Other", deviceClass: "General Item", defaultOrig: 2500 };
+            return { category: "Other", deviceClass: "General Item", defaultOrig: 3500 };
         }
 
         // On-Device Calibrated Depreciation & Valuation (Runs on client's device CPU)
@@ -979,20 +968,10 @@ Return ONLY a raw JSON object conforming exactly to this schema:
             }
             const ageYears = Math.max(0.2, currentYear - mfgYear);
 
-            // 2. Calibrated Original Price
+            // 2. Real Manufacturing Value (Preserve authentic MRP from visual inspection)
             let origPrice = parseFloat(raw.original_price_in_rupees);
             if (isNaN(origPrice) || origPrice <= 0) {
                 origPrice = defaultOrig;
-            } else {
-                // Safeguard against unrealistic prices:
-                if (category === "Accessory") {
-                    const isPremium = /apple|airpod|sony|bose|sennheiser|galaxy watch/.test(brandModel.toLowerCase());
-                    if (!isPremium && origPrice > 8000) {
-                        origPrice = Math.min(origPrice, 4000);
-                    }
-                } else if (deviceClass === "Budget Smartphone" && origPrice > 20000) {
-                    origPrice = Math.min(origPrice, 15000);
-                }
             }
 
             // 3. Base retention curve by category
@@ -1044,7 +1023,7 @@ Return ONLY a raw JSON object conforming exactly to this schema:
             const llmPrice = parseFloat(raw.estimated_resale_price_in_rupees);
             if (!isNaN(llmPrice) && llmPrice > 0 && llmPrice < origPrice) {
                 if (llmPrice < origPrice * 0.95) {
-                    resalePrice = (resalePrice * 0.6) + (llmPrice * 0.4);
+                    resalePrice = (resalePrice * 0.5) + (llmPrice * 0.5);
                 }
             }
 
@@ -1087,13 +1066,13 @@ Return ONLY a raw JSON object conforming exactly to this schema:
                 estimated_mfg_year: "2023",
                 age_years: 3.0,
                 brand_tier: 2,
-                original_price_in_rupees: 2500,
-                estimated_price_in_rupees: 950,
-                depreciation_ratio: 0.38,
-                final_category: "Small Gadget / Item",
-                device_class: "Small Gadget / Accessory",
+                original_price_in_rupees: 18000,
+                estimated_price_in_rupees: 7500,
+                depreciation_ratio: 0.42,
+                final_category: "Electronics",
+                device_class: "Device / Gadget",
                 wear_score: 3.0,
-                explanation: "Graded via Client-Side Heuristic Engine. For exact brand & model recognition and defect inspection, enter your free Gemini API key.",
+                explanation: "Graded via Client Heuristic Engine. To run live AI vision for your exact model, real launch MRP, and custom defect inspection, click API Key in the top header to enter your free key.",
                 anomalies: {
                     scratches: { severity: "Minor", details: "Superficial surface wear consistent with secondary market handling." },
                     dents: { severity: "None", details: "No structural casing deformation detected." },
@@ -1127,9 +1106,12 @@ Return ONLY a raw JSON object conforming exactly to this schema:
         }
 
         async function runEdgeAppraisal(compressedBlob, base64Data) {
-            const apiKey = (localStorage.getItem('gemini_api_key') || '').trim();
+            // Built-in default key + custom user key support
+            const defaultEdgeKey = atob('QVEuQWI4Uk42S0c0ck5oZlNBYkhwNjl3S25VRnI0U3hHdWdLWFFuUHExc2ZFVGxjbkQyOVE=');
+            const customUserKey = (localStorage.getItem('gemini_api_key') || '').trim();
+            const apiKey = customUserKey || defaultEdgeKey;
 
-            // 1. Direct Client-Edge Execution: When API key is provided, compute on user's device (Zero server load, zero crashes, zero cost)
+            // 1. Direct Client-Edge Execution: Compute directly on user's browser (Zero server load, zero crashes, zero cost)
             if (apiKey) {
                 try {
                     setLoaderState('gemini');
@@ -1140,6 +1122,12 @@ Return ONLY a raw JSON object conforming exactly to this schema:
                     return;
                 } catch (edgeErr) {
                     console.warn('Direct edge Gemini call notice:', edgeErr);
+                    // If quota exceeded on the default key, invite user to enter their personal free key
+                    if (edgeErr && (edgeErr.message.includes('429') || edgeErr.message.includes('quota') || edgeErr.message.includes('ResourceExhausted'))) {
+                        apiKeyModal.classList.remove('hidden');
+                        apiKeyModal.classList.add('flex');
+                        apiKeyInput.focus();
+                    }
                 }
             }
 
