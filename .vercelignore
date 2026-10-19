@@ -1,0 +1,7 @@
+yolov8n.pt
+assets/
+verify_all.py
+*.md
+.git/
+.github/
+__pycache__/

@@ -30,15 +30,59 @@ def get_yolo_model():
     """
     global _yolo_model
     if _yolo_model is None:
+        # Check if yolov8n.pt exists on disk, otherwise don't attempt download in read-only environments
+        model_file = "yolov8n.pt"
+        if not os.path.exists(model_file):
+            candidate = os.path.join(os.path.dirname(__file__), "..", "yolov8n.pt")
+            if os.path.exists(candidate):
+                model_file = candidate
+            else:
+                logger.info("yolov8n.pt not found on disk. Skipping YOLO to avoid read-only filesystem download.")
+                _yolo_model = False
+                return None
         try:
             logger.info("Loading YOLOv8 model...")
             from ultralytics import YOLO
-            # yolov8n.pt is 6.2MB, extremely light and runs fast on CPU
-            _yolo_model = YOLO("yolov8n.pt")
+            _yolo_model = YOLO(model_file)
         except Exception as e:
             logger.warning(f"YOLOv8 unavailable or failed to load: {e}. Falling back to cloud-only analysis.")
             _yolo_model = False
     return _yolo_model if _yolo_model is not False else None
+
+def calculate_calibrated_depreciation(category, brand_tier, age_years, wear_score):
+    """
+    Direct valuation formula ensuring accurate, calibrated second-hand pricing
+    across all platforms without requiring heavy PyTorch or external model files.
+    """
+    if category == 'House':
+        age_deprec = -0.005 * age_years
+        wear_deprec = (wear_score / 10.0) * 0.20
+        min_ratio = 0.55
+        max_ratio = 1.30
+    elif category in ['Phone', 'Laptop']:
+        age_deprec = 0.12 * age_years
+        wear_deprec = (wear_score / 10.0) * 0.30
+        min_ratio = 0.10
+        max_ratio = 0.85
+    elif category in ['Car', 'Bike']:
+        age_deprec = 0.065 * age_years
+        wear_deprec = (wear_score / 10.0) * 0.25
+        min_ratio = 0.18
+        max_ratio = 0.85
+    elif category == 'Furniture':
+        age_deprec = 0.045 * age_years
+        wear_deprec = (wear_score / 10.0) * 0.30
+        min_ratio = 0.15
+        max_ratio = 0.85
+    else:
+        age_deprec = 0.08 * age_years
+        wear_deprec = (wear_score / 10.0) * 0.25
+        min_ratio = 0.12
+        max_ratio = 0.85
+        
+    brand_bonus = 0.04 * (brand_tier - 1)
+    retained_ratio = 0.85 - age_deprec - wear_deprec + brand_bonus
+    return float(min(max_ratio, max(min_ratio, retained_ratio)))
 
 def get_pricing_model():
     """
@@ -269,8 +313,8 @@ def analyze_item(image_bytes: bytes) -> dict:
         wear_score = float(gemini_result.get('wear_score', 3.0))
         original_price = float(gemini_result.get('original_price_in_rupees', 10000.0))
         
-        # Predict depreciated value ratio using scikit-learn RandomForestRegressor model
-        depreciation_ratio = 0.50 # Default fallback
+        # Predict depreciated value ratio using scikit-learn model, with robust formula fallback
+        depreciation_ratio = None
         if pricing_model is not None:
             try:
                 input_df = pd.DataFrame([{
@@ -282,12 +326,12 @@ def analyze_item(image_bytes: bytes) -> dict:
                 depreciation_ratio = float(pricing_model.predict(input_df)[0])
                 logger.info(f"Local ML Regressor Depreciation Ratio: {depreciation_ratio*100:.2f}%")
             except Exception as pe:
-                logger.error(f"Error predicting with local ML model: {pe}")
-        else:
-            logger.warning("Local pricing model is not loaded. Using fallback depreciation rules.")
-            # Fallback mathematical rule
-            deprec_rate = 0.08 if final_category in ['Car', 'Bike'] else 0.18 if final_category in ['Phone', 'Laptop'] else 0.05
-            depreciation_ratio = max(0.05, 0.95 - (deprec_rate * age_years) - (wear_score / 10.0) * 0.40)
+                logger.warning(f"Error predicting with ML model: {pe}. Using calibrated formula fallback.")
+                depreciation_ratio = None
+                
+        if depreciation_ratio is None:
+            depreciation_ratio = calculate_calibrated_depreciation(final_category, brand_tier, age_years, wear_score)
+            logger.info(f"Calibrated Formula Depreciation Ratio: {depreciation_ratio*100:.2f}%")
             
         estimated_secondhand_price = original_price * depreciation_ratio
         
