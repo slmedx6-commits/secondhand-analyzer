@@ -5,6 +5,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, UploadFile, File, HTTPException, status
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+
 try:
     import psutil
 except ImportError:
@@ -26,24 +28,30 @@ async def lifespan(app: FastAPI):
     backend_dir = os.path.dirname(__file__) or '.'
     model_path = os.path.join(backend_dir, 'price_model.joblib')
     if not os.path.exists(model_path):
-        logger.info("Pricing model 'price_model.joblib' not found. Training programmatically...")
+        logger.info("Pricing model 'price_model.joblib' not found. Training programmatically if writable...")
         try:
-            from .train_model import train_pricing_model
+            try:
+                from .train_model import train_pricing_model
+            except ImportError:
+                from backend.train_model import train_pricing_model
             train_pricing_model()
         except Exception as te:
-            logger.error(f"Failed to auto-train local pricing model: {te}")
+            logger.warning(f"Could not auto-train local pricing model: {te}")
     else:
         logger.info(f"Local pricing model found at {model_path}.")
         
     # Pre-warm YOLOv8 and scikit-learn pricing models
     try:
         logger.info("Pre-warming YOLOv8 and Pricing models on startup...")
-        from .analyzer import get_yolo_model, get_pricing_model
+        try:
+            from .analyzer import get_yolo_model, get_pricing_model
+        except ImportError:
+            from backend.analyzer import get_yolo_model, get_pricing_model
         get_yolo_model()
         get_pricing_model()
         logger.info("Models pre-warmed successfully!")
     except Exception as we:
-        logger.error(f"Failed to pre-warm models: {we}")
+        logger.warning(f"Pre-warm note: {we}")
         
     yield
     # Cleanup if needed
@@ -120,7 +128,10 @@ async def analyze_file_upload(file: UploadFile = File(...)):
                 detail="Empty image file uploaded."
             )
             
-        from .analyzer import analyze_item
+        try:
+            from .analyzer import analyze_item
+        except ImportError:
+            from backend.analyzer import analyze_item
         report = analyze_item(image_bytes)
         
         if not report.get("success", False):
@@ -158,7 +169,10 @@ async def analyze_base64_upload(payload: Base64UploadRequest):
                 detail="Could not decode base64 image data."
             )
             
-        from .analyzer import analyze_item
+        try:
+            from .analyzer import analyze_item
+        except ImportError:
+            from backend.analyzer import analyze_item
         report = analyze_item(image_bytes)
         
         if not report.get("success", False):
