@@ -30,11 +30,15 @@ def get_yolo_model():
     """
     global _yolo_model
     if _yolo_model is None:
-        logger.info("Loading YOLOv8 model...")
-        from ultralytics import YOLO
-        # yolov8n.pt is 6.2MB, extremely light and runs fast on CPU
-        _yolo_model = YOLO("yolov8n.pt")
-    return _yolo_model
+        try:
+            logger.info("Loading YOLOv8 model...")
+            from ultralytics import YOLO
+            # yolov8n.pt is 6.2MB, extremely light and runs fast on CPU
+            _yolo_model = YOLO("yolov8n.pt")
+        except Exception as e:
+            logger.warning(f"YOLOv8 unavailable or failed to load: {e}. Falling back to cloud-only analysis.")
+            _yolo_model = False
+    return _yolo_model if _yolo_model is not False else None
 
 def get_pricing_model():
     """
@@ -108,7 +112,13 @@ def analyze_item(image_bytes: bytes) -> dict:
         
         # 1. Local YOLOv8 Object Detection
         yolo_model = get_yolo_model()
-        yolo_results = yolo_model(pil_image, verbose=False)
+        yolo_results = []
+        if yolo_model:
+            try:
+                yolo_results = yolo_model(pil_image, verbose=False)
+            except Exception as ye:
+                logger.warning(f"Error during YOLO inference: {ye}")
+                yolo_results = []
         
         yolo_category = "Other"
         yolo_confidence = 0.0

@@ -14,7 +14,6 @@ env/
 
 # Weights & models (YOLO downloads automatically)
 yolov8n.pt
-backend/price_model.joblib
 
 # IDE & OS files
 .vscode/

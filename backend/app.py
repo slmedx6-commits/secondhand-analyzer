@@ -170,15 +170,20 @@ async def serve_frontend_page():
     """
     backend_dir = os.path.dirname(__file__) or '.'
     project_root = os.path.dirname(backend_dir)
-    frontend_path = os.path.join(project_root, 'frontend', 'index.html')
+    candidates = [
+        os.path.join(project_root, 'frontend', 'index.html'),
+        os.path.join(os.getcwd(), 'frontend', 'index.html'),
+        os.path.join(backend_dir, 'frontend', 'index.html'),
+        os.path.join(backend_dir, '..', 'frontend', 'index.html')
+    ]
     
-    if os.path.exists(frontend_path):
-        try:
-            with open(frontend_path, 'r', encoding='utf-8') as f:
-                return HTMLResponse(content=f.read(), status_code=200)
-        except Exception as e:
-            logger.error(f"Error reading frontend template: {e}")
-            raise HTTPException(status_code=500, detail="Error reading index.html template file.")
+    for frontend_path in candidates:
+        if os.path.exists(frontend_path):
+            try:
+                with open(frontend_path, 'r', encoding='utf-8') as f:
+                    return HTMLResponse(content=f.read(), status_code=200)
+            except Exception as e:
+                logger.error(f"Error reading frontend template from {frontend_path}: {e}")
             
     # Fallback response in case index.html is missing
     return HTMLResponse(content="""

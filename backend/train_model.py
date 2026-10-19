@@ -40,35 +40,35 @@ def generate_synthetic_data(num_samples=2500, random_seed=42):
         # 1. Age depreciation rate and minimum value clamp based on category
         if cat == 'House':
             age_deprec = -0.005 * age # Real estate structures/land generally appreciate slightly over time
-            wear_deprec = (wear / 10.0) * 0.15 # Up to 15% loss for severe wear
-            min_ratio = 0.60
-            max_ratio = 1.50
+            wear_deprec = (wear / 10.0) * 0.20 # Up to 20% loss for wear
+            min_ratio = 0.55
+            max_ratio = 1.30
         elif cat in ['Phone', 'Laptop']:
-            age_deprec = 0.08 * age # Tech depreciates steadily but flattens out
-            wear_deprec = (wear / 10.0) * 0.25 # Up to 25% loss for severe wear
-            min_ratio = 0.15
-            max_ratio = 0.95
+            age_deprec = 0.12 * age # Tech depreciates at ~12% per year
+            wear_deprec = (wear / 10.0) * 0.30 # Up to 30% loss for heavy wear
+            min_ratio = 0.10
+            max_ratio = 0.85
         elif cat in ['Car', 'Bike']:
-            age_deprec = 0.035 * age # Vehicles deprecate around 3.5% per year
-            wear_deprec = (wear / 10.0) * 0.20 # Up to 20% loss for severe wear
-            min_ratio = 0.30
-            max_ratio = 0.95
+            age_deprec = 0.065 * age # Vehicles depreciate around 6.5% per year
+            wear_deprec = (wear / 10.0) * 0.25 # Up to 25% loss for wear
+            min_ratio = 0.18
+            max_ratio = 0.85
         elif cat == 'Furniture':
-            age_deprec = 0.02 * age # Furniture depreciates very slowly
-            wear_deprec = (wear / 10.0) * 0.20 # Up to 20% loss for severe wear
-            min_ratio = 0.25
-            max_ratio = 0.95
+            age_deprec = 0.045 * age # Furniture depreciates at ~4.5% per year
+            wear_deprec = (wear / 10.0) * 0.30 # Up to 30% loss for wear
+            min_ratio = 0.15
+            max_ratio = 0.85
         else:
-            age_deprec = 0.05 * age
-            wear_deprec = (wear / 10.0) * 0.20
-            min_ratio = 0.20
-            max_ratio = 0.95
+            age_deprec = 0.08 * age
+            wear_deprec = (wear / 10.0) * 0.25
+            min_ratio = 0.12
+            max_ratio = 0.85
             
         # 2. Brand tier retention bonus (luxury retains more value)
-        brand_bonus = 0.05 * (brand - 1)
+        brand_bonus = 0.04 * (brand - 1)
         
-        # Calculate retained ratio (percentage of original price remaining)
-        retained_ratio = 0.95 - age_deprec - wear_deprec + brand_bonus
+        # Calculate retained ratio (starts at ~0.85 to account for immediate showroom/unboxing depreciation)
+        retained_ratio = 0.85 - age_deprec - wear_deprec + brand_bonus
         
         # Add noise
         noise = np.random.normal(0, 0.03)
