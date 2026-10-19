@@ -2,7 +2,7 @@ import os
 import base64
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, UploadFile, File, HTTPException, status
+from fastapi import FastAPI, UploadFile, File, HTTPException, status, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -112,7 +112,7 @@ async def get_system_stats():
 
 @app.post("/analyze")
 @app.post("/api/analyze")
-async def analyze_file_upload(file: UploadFile = File(...)):
+async def analyze_file_upload(request: Request, file: UploadFile = File(...)):
     """
     Receives an uploaded file, runs visual and price analysis, returns report.
     """
@@ -135,7 +135,8 @@ async def analyze_file_upload(file: UploadFile = File(...)):
             from .analyzer import analyze_item
         except ImportError:
             from backend.analyzer import analyze_item
-        report = analyze_item(image_bytes)
+        custom_key = request.headers.get("x-gemini-api-key")
+        report = analyze_item(image_bytes, custom_api_key=custom_key)
         
         if not report.get("success", False):
             return JSONResponse(
@@ -156,7 +157,7 @@ async def analyze_file_upload(file: UploadFile = File(...)):
 
 @app.post("/analyze-base64")
 @app.post("/api/analyze-base64")
-async def analyze_base64_upload(payload: Base64UploadRequest):
+async def analyze_base64_upload(request: Request, payload: Base64UploadRequest):
     """
     Receives base64 encoded image string (e.g. from client webcam), decodes and analyzes.
     """
@@ -177,7 +178,8 @@ async def analyze_base64_upload(payload: Base64UploadRequest):
             from .analyzer import analyze_item
         except ImportError:
             from backend.analyzer import analyze_item
-        report = analyze_item(image_bytes)
+        custom_key = request.headers.get("x-gemini-api-key")
+        report = analyze_item(image_bytes, custom_api_key=custom_key)
         
         if not report.get("success", False):
             return JSONResponse(

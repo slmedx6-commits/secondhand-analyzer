@@ -116,24 +116,32 @@
             </div>
         </div>
 
-        <!-- Host Stats Widgets -->
-        <div class="flex items-center gap-4 bg-slate-950/80 px-3.5 py-1.5 rounded-xl border border-indigo-500/10 shadow-inner text-[11px] w-full sm:w-auto justify-center">
-            <div class="flex items-center gap-1.5">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
-                <span class="text-slate-500 uppercase font-bold tracking-wider">Host:</span>
-            </div>
-            <div class="flex items-center gap-3">
-                <div class="flex items-center gap-1">
-                    <i data-lucide="cpu" class="w-3.5 h-3.5 text-indigo-400"></i>
-                    <span class="text-slate-400">CPU:</span>
-                    <span id="cpu-stat" class="font-bold text-slate-200">--%</span>
+        <div class="flex flex-wrap items-center gap-2.5 justify-center sm:justify-end">
+            <!-- Host Stats Widgets -->
+            <div class="flex items-center gap-4 bg-slate-950/80 px-3.5 py-1.5 rounded-xl border border-indigo-500/10 shadow-inner text-[11px] justify-center">
+                <div class="flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+                    <span class="text-slate-500 uppercase font-bold tracking-wider">Host:</span>
                 </div>
-                <div class="flex items-center gap-1 border-l border-slate-800 pl-3">
-                    <i data-lucide="hard-drive" class="w-3.5 h-3.5 text-purple-400"></i>
-                    <span class="text-slate-400">RAM:</span>
-                    <span id="ram-stat" class="font-bold text-slate-200">--%</span>
+                <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-1">
+                        <i data-lucide="cpu" class="w-3.5 h-3.5 text-indigo-400"></i>
+                        <span class="text-slate-400">CPU:</span>
+                        <span id="cpu-stat" class="font-bold text-slate-200">--%</span>
+                    </div>
+                    <div class="flex items-center gap-1 border-l border-slate-800 pl-3">
+                        <i data-lucide="hard-drive" class="w-3.5 h-3.5 text-purple-400"></i>
+                        <span class="text-slate-400">RAM:</span>
+                        <span id="ram-stat" class="font-bold text-slate-200">--%</span>
+                    </div>
                 </div>
             </div>
+
+            <!-- Client API Key Configuration Button -->
+            <button id="btn-api-key" type="button" class="flex items-center gap-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/25 px-3 py-1.5 rounded-xl text-[11px] font-semibold transition-all shadow-sm">
+                <i data-lucide="key" class="w-3.5 h-3.5 text-indigo-400"></i>
+                <span id="api-key-label">API Key</span>
+            </button>
         </div>
     </header>
 
@@ -589,11 +597,15 @@
             analyzeBase64(base64Data);
         });
 
+        let loaderTimers = [];
+        function clearLoaderTimers() {
+            loaderTimers.forEach(t => clearTimeout(t));
+            loaderTimers = [];
+        }
+
         // Set loader states dynamically
         function setLoaderState(stage) {
-            loaderCard.classList.remove('hidden');
-            errorCard.classList.add('hidden');
-            resultsSection.classList.add('hidden');
+            if (loaderCard.classList.contains('hidden')) return;
 
             [stepYoloDot, stepGeminiDot, stepSklearnDot].forEach(dot => {
                 dot.className = "absolute -left-[21px] top-1 w-1.5 h-1.5 rounded-full bg-slate-800";
@@ -621,6 +633,58 @@
                 stepSklearnDot.className = "absolute -left-[21px] top-1 w-1.5 h-1.5 rounded-full bg-emerald-500 ring-2 ring-emerald-500/30";
                 stepSklearnText.className = "text-emerald-400 font-bold";
             }
+        }
+
+        function startLoaderAnimation() {
+            clearLoaderTimers();
+            loaderCard.classList.remove('hidden');
+            errorCard.classList.add('hidden');
+            resultsSection.classList.add('hidden');
+
+            setLoaderState('yolo');
+            loaderTimers.push(setTimeout(() => setLoaderState('gemini'), 600));
+            loaderTimers.push(setTimeout(() => setLoaderState('sklearn'), 1600));
+        }
+
+        // Client API Key Storage & Header integration
+        const btnApiKey = document.getElementById('btn-api-key');
+        const apiKeyLabel = document.getElementById('api-key-label');
+
+        function updateApiKeyUI() {
+            if (!btnApiKey || !apiKeyLabel) return;
+            const key = localStorage.getItem('gemini_api_key');
+            if (key) {
+                apiKeyLabel.textContent = 'Key: Active';
+                btnApiKey.className = 'flex items-center gap-1.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-3 py-1.5 rounded-xl text-[11px] font-semibold transition-all shadow-sm';
+            } else {
+                apiKeyLabel.textContent = 'API Key';
+                btnApiKey.className = 'flex items-center gap-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/25 px-3 py-1.5 rounded-xl text-[11px] font-semibold transition-all shadow-sm';
+            }
+        }
+
+        if (btnApiKey) {
+            btnApiKey.addEventListener('click', () => {
+                const current = localStorage.getItem('gemini_api_key') || '';
+                const entered = prompt('Enter your Google Gemini API Key (stored safely in your browser):', current);
+                if (entered !== null) {
+                    if (entered.trim()) {
+                        localStorage.setItem('gemini_api_key', entered.trim());
+                    } else {
+                        localStorage.removeItem('gemini_api_key');
+                    }
+                    updateApiKeyUI();
+                }
+            });
+            updateApiKeyUI();
+        }
+
+        function getCustomHeaders() {
+            const headers = {};
+            const key = localStorage.getItem('gemini_api_key');
+            if (key) {
+                headers['X-Gemini-Api-Key'] = key;
+            }
+            return headers;
         }
 
         // Client-side quick compression to eliminate upload lag on mobile & slow connections
@@ -657,9 +721,7 @@
         }
 
         async function analyzeFile(file) {
-            setLoaderState('yolo');
-            setTimeout(() => setLoaderState('gemini'), 600);
-            setTimeout(() => setLoaderState('sklearn'), 1600);
+            startLoaderAnimation();
 
             const compressedBlob = await compressImage(file);
             const formData = new FormData();
@@ -670,26 +732,29 @@
 
             try {
                 let response;
+                const reqHeaders = getCustomHeaders();
                 try {
                     response = await fetch('/analyze', {
                         method: 'POST',
+                        headers: reqHeaders,
                         body: formData,
                         signal: controller.signal
                     });
                     if (response.status === 404) {
                         response = await fetch('/api/analyze', {
                             method: 'POST',
+                            headers: reqHeaders,
                             body: formData,
                             signal: controller.signal
                         });
                     }
                 } catch (fetchErr) {
                     if (fetchErr.name === 'AbortError') {
-                        throw new Error('Analysis timed out. Please check your network connection or verify GEMINI_API_KEY in Vercel settings.');
+                        throw new Error('Analysis timed out. Please check your network connection.');
                     }
-                    // Try direct /api/analyze fallback on network error
                     response = await fetch('/api/analyze', {
                         method: 'POST',
+                        headers: reqHeaders,
                         body: formData,
                         signal: controller.signal
                     });
@@ -706,7 +771,7 @@
                 renderResults(result);
             } catch (err) {
                 if (err.name === 'AbortError') {
-                    showError('Analysis timed out. Please check your network connection or GEMINI_API_KEY.');
+                    showError('Analysis timed out. Please check your network connection or enter your GEMINI_API_KEY.');
                 } else {
                     showError(err.message);
                 }
@@ -714,37 +779,36 @@
         }
 
         async function analyzeBase64(base64Data) {
-            setLoaderState('yolo');
-            setTimeout(() => setLoaderState('gemini'), 700);
-            setTimeout(() => setLoaderState('sklearn'), 1800);
+            startLoaderAnimation();
 
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 45000);
 
             try {
                 let response;
+                const reqHeaders = { 'Content-Type': 'application/json', ...getCustomHeaders() };
                 try {
                     response = await fetch('/analyze-base64', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: reqHeaders,
                         body: JSON.stringify({ image_base64: base64Data }),
                         signal: controller.signal
                     });
                     if (response.status === 404) {
                         response = await fetch('/api/analyze-base64', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: reqHeaders,
                             body: JSON.stringify({ image_base64: base64Data }),
                             signal: controller.signal
                         });
                     }
                 } catch (fetchErr) {
                     if (fetchErr.name === 'AbortError') {
-                        throw new Error('Analysis timed out. Please check your network connection or GEMINI_API_KEY.');
+                        throw new Error('Analysis timed out. Please check your network connection.');
                     }
                     response = await fetch('/api/analyze-base64', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: reqHeaders,
                         body: JSON.stringify({ image_base64: base64Data }),
                         signal: controller.signal
                     });
@@ -761,7 +825,7 @@
                 renderResults(result);
             } catch (err) {
                 if (err.name === 'AbortError') {
-                    showError('Analysis timed out. Please check your network connection or GEMINI_API_KEY.');
+                    showError('Analysis timed out. Please check your network connection or enter your GEMINI_API_KEY.');
                 } else {
                     showError(err.message);
                 }
@@ -769,10 +833,12 @@
         }
 
         function showError(msg) {
+            clearLoaderTimers();
             loaderCard.classList.add('hidden');
             errorCard.classList.remove('hidden');
             resultsSection.classList.add('hidden');
             errorMessage.textContent = msg;
+            errorCard.scrollIntoView({ behavior: 'smooth' });
         }
 
         function getSeverityStyles(severity) {
@@ -815,6 +881,7 @@
         }
 
         function renderResults(data) {
+            clearLoaderTimers();
             loaderCard.classList.add('hidden');
             errorCard.classList.add('hidden');
             resultsSection.classList.remove('hidden');
