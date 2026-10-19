@@ -10,6 +10,10 @@ import numpy as np
 import pandas as pd
 import joblib
 
+# Limit CPU worker threads to prevent pegging 100% CPU on low-end host devices
+os.environ["OMP_NUM_THREADS"] = "2"
+os.environ["MKL_NUM_THREADS"] = "2"
+
 # Suppress warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -27,6 +31,7 @@ _pricing_model = None
 def get_yolo_model():
     """
     Lazy load YOLOv8 model for object detection.
+    Optimized for low-end devices by limiting PyTorch threads.
     """
     global _yolo_model
     if _yolo_model is None:
@@ -42,6 +47,11 @@ def get_yolo_model():
                 return None
         try:
             logger.info("Loading YOLOv8 model...")
+            try:
+                import torch
+                torch.set_num_threads(min(2, os.cpu_count() or 1))
+            except Exception:
+                pass
             from ultralytics import YOLO
             _yolo_model = YOLO(model_file)
         except Exception as e:
@@ -438,5 +448,10 @@ def analyze_item(image_bytes: bytes, custom_api_key: str = None) -> dict:
             "error": str(e)
         }
     finally:
-        # Strict memory reclamation
+        # Strict memory reclamation for low-RAM hosts
+        if 'pil_image' in locals() and pil_image:
+            try:
+                pil_image.close()
+            except Exception:
+                pass
         gc.collect()

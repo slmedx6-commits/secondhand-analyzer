@@ -1,7 +1,9 @@
 import os
 import base64
 import logging
+import asyncio
 from contextlib import asynccontextmanager
+from starlette.concurrency import run_in_threadpool
 from fastapi import FastAPI, UploadFile, File, HTTPException, status, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -21,10 +23,14 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Pre-startup model check/train trigger
+# Concurrency control for low-end CPUs and low-RAM environments
+# Limits parallel heavy image ML inferences to prevent Out-Of-Memory or CPU freezing
+MAX_CONCURRENT_ANALYSES = max(1, min(4, (os.cpu_count() or 2)))
+analysis_semaphore = asyncio.Semaphore(MAX_CONCURRENT_ANALYSES)
+
+# Pre-startup model check
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Check if pricing model exists, if not, train it
     backend_dir = os.path.dirname(__file__) or '.'
     model_path = os.path.join(backend_dir, 'price_model.joblib')
     if not os.path.exists(model_path):
@@ -40,21 +46,28 @@ async def lifespan(app: FastAPI):
     else:
         logger.info(f"Local pricing model found at {model_path}.")
         
-    # Pre-warm YOLOv8 and scikit-learn pricing models
+    # Safe model initialization that respects low RAM
     try:
-        logger.info("Pre-warming YOLOv8 and Pricing models on startup...")
-        try:
-            from .analyzer import get_yolo_model, get_pricing_model
-        except ImportError:
-            from backend.analyzer import get_yolo_model, get_pricing_model
-        get_yolo_model()
-        get_pricing_model()
-        logger.info("Models pre-warmed successfully!")
+        if psutil is not None:
+            avail_mb = psutil.virtual_memory().available / (1024 * 1024)
+            if avail_mb < 450:
+                logger.info(f"Low RAM detected ({avail_mb:.1f} MB available). Deferring heavy model loading to conserve host memory.")
+            else:
+                try:
+                    from .analyzer import get_pricing_model
+                except ImportError:
+                    from backend.analyzer import get_pricing_model
+                get_pricing_model()
+        else:
+            try:
+                from .analyzer import get_pricing_model
+            except ImportError:
+                from backend.analyzer import get_pricing_model
+            get_pricing_model()
     except Exception as we:
-        logger.warning(f"Pre-warm note: {we}")
+        logger.warning(f"Startup note: {we}")
         
     yield
-    # Cleanup if needed
 
 app = FastAPI(
     title="AI Second-Hand Item Analyzer",
@@ -136,7 +149,11 @@ async def analyze_file_upload(request: Request, file: UploadFile = File(...)):
         except ImportError:
             from backend.analyzer import analyze_item
         custom_key = request.headers.get("x-gemini-api-key")
-        report = analyze_item(image_bytes, custom_api_key=custom_key)
+        
+        # Run asynchronously in AnyIO threadpool protected by concurrency semaphore
+        # Prevents blocking the event loop and prevents OOM on low-end host machines
+        async with analysis_semaphore:
+            report = await run_in_threadpool(analyze_item, image_bytes, custom_key)
         
         if not report.get("success", False):
             return JSONResponse(
@@ -179,7 +196,10 @@ async def analyze_base64_upload(request: Request, payload: Base64UploadRequest):
         except ImportError:
             from backend.analyzer import analyze_item
         custom_key = request.headers.get("x-gemini-api-key")
-        report = analyze_item(image_bytes, custom_api_key=custom_key)
+        
+        # Run asynchronously in AnyIO threadpool protected by concurrency semaphore
+        async with analysis_semaphore:
+            report = await run_in_threadpool(analyze_item, image_bytes, custom_key)
         
         if not report.get("success", False):
             return JSONResponse(
@@ -233,3 +253,15 @@ async def serve_frontend_page():
         </body>
     </html>
     """, status_code=404)
+
+if __name__ == "__main__":
+    import uvicorn
+    host = os.getenv("HOST", "0.0.0.0")
+    port = int(os.getenv("PORT", 8000))
+    print(f"\n========================================================")
+    print(f"  AI Second-Hand Item Analyzer (Localhost Server)")
+    print(f"  Local:   http://localhost:{port}")
+    print(f"  Network: http://{host}:{port}")
+    print(f"  Max Concurrent Analyses: {MAX_CONCURRENT_ANALYSES}")
+    print(f"========================================================\n")
+    uvicorn.run("backend.app:app", host=host, port=port, reload=False, workers=1, limit_concurrency=100)
