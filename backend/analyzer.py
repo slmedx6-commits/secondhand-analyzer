@@ -256,7 +256,7 @@ def analyze_item(image_bytes: bytes) -> dict:
         
         logger.info("Invoking Gemini with fallback models...")
         response = None
-        for model_name in ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro', 'gemini-flash-latest']:
+        for model_name in ['gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-flash-latest', 'gemini-2.5-flash']:
             try:
                 model = genai.GenerativeModel(model_name, generation_config=generation_config)
                 response = model.generate_content(contents=[system_prompt, pil_image])
