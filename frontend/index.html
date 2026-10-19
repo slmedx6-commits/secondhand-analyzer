@@ -794,42 +794,76 @@
         }
 
         // Direct Client Edge Gemini VLM Call (Zero Server Load, Zero Crashes, Free)
+        // Direct Client Edge Gemini VLM Call (Zero Server Load, Zero Crashes, Free)
         async function callGeminiDirectEdge(base64Image, apiKey) {
             const cleanBase64 = base64Image.includes(',') ? base64Image.split(',')[1] : base64Image;
-            const systemPrompt = `You are a master appraiser and forensic condition inspector for the Indian second-hand market (Cashify, OLX India, Spinny, Cars24, and CeX standards).
-The current calendar year is 2026. Use 2026 as reference year to calculate age.
+            const systemPrompt = `You are an elite forensic condition inspector and expert valuation appraiser for the Indian second-hand market (Cashify, OLX India, Spinny, Cars24, and CeX standards).
+The reference calendar year is 2026. Calculate product age using 2026.
 
-Carefully inspect the image to extract true, accurate, and fair market data:
-1. BRAND & EXACT MODEL: Inspect logos, emblems, camera sensor layouts, speaker grilles, body contours, bezels, and ports. Identify the exact manufacturer (e.g. Apple, Samsung, Dell, Maruti Suzuki, Royal Enfield) and specific model (e.g. iPhone 13 128GB, Galaxy S21 FE, Swift VXi 1.2L, MacBook Air M1 2020).
-2. MANUFACTURING / LAUNCH YEAR: State the official release/manufacture year of this model (e.g. 2021). Set age_years = (2026 - estimated_mfg_year).
-3. ORIGINAL RETAIL PRICE (INR ₹): Provide the genuine average launch retail price in India when new in Rupees.
-4. PHYSICAL DEFECT AUDIT (SCRATCHES, DENTS, CRACKS, RUST):
-   - Scratches: Rate as 'None', 'Minor' (micro-scratches/hairline), 'Moderate' (visible finish scratches), or 'Severe' (deep gouges/peeled paint). Describe exact visual locations.
+CRITICAL PRODUCT IDENTIFICATION & VALUATION RULES:
+1. IDENTIFY THE EXACT ITEM & DEVICE SCALE:
+   - Accurately determine what the object is and its proper tier:
+     * Small Gadget / Accessory: Earbuds / TWS, smartwatches, fitness bands, PC mice, keyboards, chargers, cables, power banks, remotes, small Bluetooth speakers, calculators, phone cases, adapters.
+     * Budget Smartphone: Redmi, Realme, Poco, Vivo Y-series, Oppo A-series, Samsung M/F-series, Moto G-series, Infinix, Tecno.
+     * Mid-to-Flagship Smartphone: iPhone, Galaxy S/Z, OnePlus, Pixel.
+     * Tablet / iPad.
+     * Laptop / PC / Monitor.
+     * Vehicle (Two-wheeler / Car).
+     * Furniture / Home / Other.
+   - DO NOT confuse small accessories, earbuds, smartwatches, or mice with laptops or flagships!
+   - State the exact brand and model (e.g. "boAt Airdopes 141", "Logitech B100 Mouse", "Redmi Note 10 Pro", "Noise ColorFit Pulse", "Apple iPhone 13 128GB").
+
+2. OFFICIAL MANUFACTURING / LAUNCH YEAR:
+   - Identify the official commercial launch/mfg year for this exact model (e.g. iPhone 11 was launched in 2019, iPhone 13 in 2021, Redmi Note 10 in 2021, boAt Airdopes 141 in 2021).
+   - Set age_years = (2026 - estimated_mfg_year).
+
+3. REALISTIC ORIGINAL RETAIL PRICE (INR ₹):
+   - Ground the original price in realistic Indian launch retail MRP:
+     * Small accessories, mice, budget earphones: ₹400 - ₹2,500
+     * Smartwatches / TWS: ₹1,200 - ₹4,500 (premium smartwatches like Apple Watch: ₹25,000 - ₹45,000)
+     * Budget smartphones: ₹6,500 - ₹15,000
+     * Mid-to-flagship smartphones: ₹25,000 - ₹1,10,000
+     * Laptops: ₹30,000 - ₹95,000
+     * Vehicles: ₹50,000 - ₹12,00,000+
+   - NEVER output tens of thousands (like ₹35,000 or ₹50,000) for a small accessory, mouse, earbud, or budget phone!
+
+4. GRANULAR DEFECT AUDIT (SCRATCHES & DENTS):
+   - Scratches: Rate as 'None', 'Minor' (micro-scratches/hairline), 'Moderate' (visible scratches on screen/chassis), or 'Severe' (deep gouges/peeled paint). Describe visual locations.
    - Dents: Rate as 'None', 'Minor' (small corner nick/micro-ding), 'Moderate' (noticeable casing dent/panel bend), or 'Severe' (structural chassis deformation). Describe visual locations.
-   - Cracks: Rate as 'None', 'Minor' (hairline crack), 'Moderate' (visible glass/casing fissure), or 'Severe' (shattered display/broken housing).
-   - Rust: Rate as 'None', 'Minor', 'Moderate', or 'Severe' for oxidation or corrosion.
-   - Wear Score: Float from 0.0 (immaculate/sealed box) to 10.0 (completely broken/waste).
-5. CURRENT MARKET RESALE VALUE (INR ₹): What does this exact item in this specific cosmetic condition realistically sell for today in India on Cashify / OLX / Spinny? Consider market depreciation, age, scratches, and dents.
+   - Cracks: Rate as 'None', 'Minor' (hairline crack), 'Moderate' (visible glass/body crack), or 'Severe' (shattered display/broken housing).
+   - Rust: Rate as 'None', 'Minor', 'Moderate', or 'Severe'.
+   - Wear Score: Float from 0.0 (pristine/sealed box) to 10.0 (completely broken/scrap).
+
+5. ACCURATE SECOND-HAND RESALE VALUE (INR ₹):
+   - What does this exact item in this specific cosmetic condition realistically fetch today in India on Cashify / OLX / CeX?
+   - Consider the product's age relative to 2026, tech obsolescence, and exact physical defects (scratches, dents, cracks).
+   - For example:
+     * A 3-5 year old budget earbud with scratches realistically sells for ₹200 to ₹400 (NOT ₹20,000!).
+     * A 5-year-old iPhone 13 (2021) with minor wear sells for ₹24,000 to ₹28,000.
+     * An older Redmi phone with scratches and dents sells for ₹2,000 to ₹3,500.
+     * A computer mouse with scratches sells for ₹150 to ₹250.
+   - Resale price MUST NEVER exceed or be close to the original price for used electronics.
 
 Return ONLY a raw JSON object conforming exactly to this schema:
 {
-  "brand": "string",
-  "model": "string",
-  "estimated_mfg_year": "string",
-  "age_years": 3.0,
-  "brand_tier": 2,
-  "original_price_in_rupees": 50000,
-  "estimated_resale_price_in_rupees": 22000,
-  "scratches_severity": "None",
+  "device_class": "Small Gadget / Accessory" | "Budget Smartphone" | "Mid-to-Flagship Smartphone" | "Tablet" | "Laptop" | "Vehicle" | "Furniture" | "Other",
+  "brand": "string (e.g. boAt, Apple, Samsung, Logitech, Redmi)",
+  "model": "string (e.g. Airdopes 141, iPhone 13 128GB, B100 Mouse, Note 10 Pro)",
+  "estimated_mfg_year": "string (e.g. 2021)",
+  "age_years": 5.0,
+  "brand_tier": 1 | 2 | 3,
+  "original_price_in_rupees": float,
+  "estimated_resale_price_in_rupees": float,
+  "scratches_severity": "None" | "Minor" | "Moderate" | "Severe",
   "scratches_details": "string",
-  "dents_severity": "None",
+  "dents_severity": "None" | "Minor" | "Moderate" | "Severe",
   "dents_details": "string",
-  "cracks_severity": "None",
+  "cracks_severity": "None" | "Minor" | "Moderate" | "Severe",
   "cracks_details": "string",
-  "rust_severity": "None",
+  "rust_severity": "None" | "Minor" | "Moderate" | "Severe",
   "rust_details": "string",
   "other_wear_details": "string",
-  "wear_score": 2.5,
+  "wear_score": float,
   "explanation": "string"
 }`;
 
@@ -881,29 +915,96 @@ Return ONLY a raw JSON object conforming exactly to this schema:
             throw lastErr || new Error('Could not reach Google Gemini API.');
         }
 
+        // Category & Device Form-Factor Classifier
+        function detectCategoryAndClass(brandModel, rawDeviceClass) {
+            const text = (brandModel + ' ' + (rawDeviceClass || '')).toLowerCase();
+
+            // 1. Check Small Gadgets / Accessories first!
+            if (/watch|smartwatch|band|fitbit|earbud|earbuds|airpod|airpods|headphone|headphones|earphone|earphones|tws|buds|neckband|mouse|keyboard|charger|cable|adapter|powerbank|power bank|remote|speaker|soundbar|pendrive|flash drive|mic|microphone|calculator|webcam|case|cover/.test(text)) {
+                return { category: "Accessory", deviceClass: "Small Gadget / Accessory", defaultOrig: 2200 };
+            }
+
+            // 2. Tablets
+            if (/tablet|ipad|tab\b|galaxy tab|pad\b/.test(text) && !/laptop|thinkpad/.test(text)) {
+                return { category: "Tablet", deviceClass: "Tablet", defaultOrig: 24000 };
+            }
+
+            // 3. Laptops & Computers
+            if (/laptop|macbook|notebook|chromebook|thinkpad|zenbook|ideapad|pavilion|inspiron|desktop|cpu cabinet|monitor/.test(text)) {
+                return { category: "Laptop", deviceClass: "Laptop / PC", defaultOrig: 45000 };
+            }
+
+            // 4. Vehicles
+            if (/car\b|swift|maruti|hyundai|honda city|honda civic|creta|baleno|innova|fortuner|wagonr|alto|sedan|suv|hatchback|truck|bus/.test(text)) {
+                return { category: "Car", deviceClass: "Vehicle", defaultOrig: 550000 };
+            }
+            if (/bike|motorcycle|scooter|activa|pulsar|royal enfield|classic 350|bullet|yamaha r15|splendor|jupiter|ktm|duke/.test(text)) {
+                return { category: "Bike", deviceClass: "Vehicle", defaultOrig: 85000 };
+            }
+
+            // 5. Smartphones: Distinguish Budget vs Mid/Flagship
+            if (/redmi|realme|poco|infinix|tecno|narzo|galaxy m|galaxy f|galaxy a\d\d|vivo y|oppo a|moto g|nokia 1|nokia 2|nokia 3/.test(text)) {
+                return { category: "Phone", deviceClass: "Budget Smartphone", defaultOrig: 11000 };
+            }
+            if (/iphone|samsung|galaxy s|galaxy z|pixel|oneplus|vivo x|oppo find|flagship|mobile|smartphone|phone/.test(text)) {
+                return { category: "Phone", deviceClass: "Mid-to-Flagship Phone", defaultOrig: 45000 };
+            }
+
+            // 6. Furniture & Home
+            if (/chair|sofa|table|bed|desk|furniture|couch|wardrobe|cupboard/.test(text)) {
+                return { category: "Furniture", deviceClass: "Furniture", defaultOrig: 10000 };
+            }
+            if (/house|apartment|flat|villa|property/.test(text)) {
+                return { category: "House", deviceClass: "Real Estate", defaultOrig: 4000000 };
+            }
+
+            return { category: "Other", deviceClass: "General Item", defaultOrig: 2500 };
+        }
+
         // On-Device Calibrated Depreciation & Valuation (Runs on client's device CPU)
         function calculateClientValuation(raw, base64Preview) {
             const currentYear = 2026;
+            const brandModel = `${raw.brand || ''} ${raw.model || ''}`.trim();
+            const { category, deviceClass, defaultOrig } = detectCategoryAndClass(brandModel, raw.device_class);
+
+            // 1. Accurate Manufacturing Year & Age
             let mfgYear = parseInt(raw.estimated_mfg_year, 10);
-            if (isNaN(mfgYear) || mfgYear < 1980 || mfgYear > currentYear) {
-                mfgYear = currentYear - Math.round(parseFloat(raw.age_years) || 2.0);
+            if (isNaN(mfgYear) || mfgYear < 1990 || mfgYear > currentYear) {
+                const parsedAge = parseFloat(raw.age_years);
+                if (!isNaN(parsedAge) && parsedAge > 0 && parsedAge <= 30) {
+                    mfgYear = Math.max(1995, Math.round(currentYear - parsedAge));
+                } else {
+                    mfgYear = 2023;
+                }
             }
             const ageYears = Math.max(0.2, currentYear - mfgYear);
 
-            // Infer category
-            const brandModel = `${raw.brand || ''} ${raw.model || ''}`.toLowerCase();
-            let category = "Other";
-            if (/phone|iphone|samsung|galaxy|pixel|oneplus|redmi|realme|xiaomi|oppo|vivo|nokia|motorola/.test(brandModel)) category = "Phone";
-            else if (/laptop|macbook|dell|hp|lenovo|thinkpad|asus|acer|msi/.test(brandModel)) category = "Laptop";
-            else if (/car|swift|maruti|hyundai|honda|toyota|tata|mahindra|bmw|audi|mercedes|kia|sedan|suv/.test(brandModel)) category = "Car";
-            else if (/bike|motorcycle|scooter|royal enfield|pulsar|activa|yamaha|ktm|hero|tvs|jupiter/.test(brandModel)) category = "Bike";
-            else if (/chair|sofa|table|bed|desk|furniture|couch/.test(brandModel)) category = "Furniture";
-            else if (/house|apartment|flat|villa|property/.test(brandModel)) category = "House";
+            // 2. Calibrated Original Price
+            let origPrice = parseFloat(raw.original_price_in_rupees);
+            if (isNaN(origPrice) || origPrice <= 0) {
+                origPrice = defaultOrig;
+            } else {
+                // Safeguard against unrealistic prices:
+                if (category === "Accessory") {
+                    const isPremium = /apple|airpod|sony|bose|sennheiser|galaxy watch/.test(brandModel.toLowerCase());
+                    if (!isPremium && origPrice > 8000) {
+                        origPrice = Math.min(origPrice, 4000);
+                    }
+                } else if (deviceClass === "Budget Smartphone" && origPrice > 20000) {
+                    origPrice = Math.min(origPrice, 15000);
+                }
+            }
 
-            // Base retention curve
-            let baseRetention = 0.80 * Math.pow(1.0 - 0.14, ageYears);
-            let minRatio = 0.10, maxRatio = 0.80;
-            if (category === 'Phone' || category === 'Laptop') {
+            // 3. Base retention curve by category
+            let baseRetention = 0.72 * Math.pow(1.0 - 0.16, ageYears);
+            let minRatio = 0.08, maxRatio = 0.75;
+            if (category === 'Accessory') {
+                baseRetention = 0.68 * Math.pow(1.0 - 0.22, ageYears);
+                minRatio = 0.05; maxRatio = 0.65;
+            } else if (deviceClass === 'Budget Smartphone') {
+                baseRetention = 0.76 * Math.pow(1.0 - 0.18, ageYears);
+                minRatio = 0.08; maxRatio = 0.76;
+            } else if (category === 'Phone' || category === 'Laptop' || category === 'Tablet') {
                 baseRetention = 0.82 * Math.pow(1.0 - 0.16, ageYears);
                 minRatio = 0.08; maxRatio = 0.82;
             } else if (category === 'Car' || category === 'Bike') {
@@ -913,14 +1014,15 @@ Return ONLY a raw JSON object conforming exactly to this schema:
                 baseRetention = 1.0 + (0.04 * ageYears);
                 minRatio = 0.60; maxRatio = 2.50;
             } else if (category === 'Furniture') {
-                baseRetention = 0.80 * Math.pow(1.0 - 0.12, ageYears);
-                minRatio = 0.12; maxRatio = 0.80;
+                baseRetention = 0.78 * Math.pow(1.0 - 0.14, ageYears);
+                minRatio = 0.10; maxRatio = 0.78;
             }
 
-            const sMap = { 'none': 0.0, 'minor': 0.06, 'moderate': 0.16, 'severe': 0.28 };
-            const dMap = { 'none': 0.0, 'minor': 0.08, 'moderate': 0.20, 'severe': 0.38 };
-            const cMap = { 'none': 0.0, 'minor': 0.22, 'moderate': 0.38, 'severe': 0.58 };
-            const rMap = { 'none': 0.0, 'minor': 0.10, 'moderate': 0.22, 'severe': 0.45 };
+            // 4. Defect penalties mapping (Cashify / Spinny inspection standards)
+            const sMap = { 'none': 0.0, 'minor': 0.07, 'moderate': 0.18, 'severe': 0.30 };
+            const dMap = { 'none': 0.0, 'minor': 0.09, 'moderate': 0.22, 'severe': 0.40 };
+            const cMap = { 'none': 0.0, 'minor': 0.25, 'moderate': 0.42, 'severe': 0.62 };
+            const rMap = { 'none': 0.0, 'minor': 0.12, 'moderate': 0.25, 'severe': 0.48 };
 
             const sSev = (raw.scratches_severity || 'None').toLowerCase().trim();
             const dSev = (raw.dents_severity || 'None').toLowerCase().trim();
@@ -936,15 +1038,18 @@ Return ONLY a raw JSON object conforming exactly to this schema:
             let retainedRatio = (baseRetention * (1.0 - defectPenalty)) - wearFactor + brandBonus;
             retainedRatio = Math.min(maxRatio, Math.max(minRatio, retainedRatio));
 
-            const origPrice = parseFloat(raw.original_price_in_rupees) || 35000;
             let resalePrice = origPrice * retainedRatio;
 
-            if (raw.estimated_resale_price_in_rupees && raw.estimated_resale_price_in_rupees > 0) {
-                const llmPrice = parseFloat(raw.estimated_resale_price_in_rupees);
-                if (llmPrice < origPrice) {
+            // Blend with model's market estimate if it is sensible
+            const llmPrice = parseFloat(raw.estimated_resale_price_in_rupees);
+            if (!isNaN(llmPrice) && llmPrice > 0 && llmPrice < origPrice) {
+                if (llmPrice < origPrice * 0.95) {
                     resalePrice = (resalePrice * 0.6) + (llmPrice * 0.4);
                 }
             }
+
+            // Always ensure resalePrice does not exceed original price and has realistic floor
+            resalePrice = Math.min(origPrice * 0.85, Math.max(origPrice * minRatio, resalePrice));
 
             const cleanBase64 = base64Preview ? (base64Preview.includes(',') ? base64Preview.split(',')[1] : base64Preview) : '';
 
@@ -956,10 +1061,11 @@ Return ONLY a raw JSON object conforming exactly to this schema:
                 brand_tier: brandTier,
                 original_price_in_rupees: Math.round(origPrice),
                 estimated_price_in_rupees: Math.round(resalePrice),
-                depreciation_ratio: retainedRatio,
+                depreciation_ratio: Math.min(0.85, resalePrice / origPrice),
                 final_category: category,
+                device_class: deviceClass,
                 wear_score: wearScore,
-                explanation: raw.explanation || `Visual inspection computed on local device CPU edge engine.`,
+                explanation: raw.explanation || `Visual condition evaluated based on ${currentYear} Indian market standards.`,
                 anomalies: {
                     scratches: { severity: raw.scratches_severity || 'None', details: raw.scratches_details || 'No surface scratches.' },
                     dents: { severity: raw.dents_severity || 'None', details: raw.dents_details || 'No chassis dents detected.' },
@@ -977,15 +1083,16 @@ Return ONLY a raw JSON object conforming exactly to this schema:
             const cleanBase64 = base64Data ? (base64Data.includes(',') ? base64Data.split(',')[1] : base64Data) : '';
             return {
                 brand: "Market Inspected Brand",
-                model: "Device Graded Item",
+                model: "Inspected Device",
                 estimated_mfg_year: "2023",
                 age_years: 3.0,
                 brand_tier: 2,
-                original_price_in_rupees: 35000,
-                estimated_price_in_rupees: 16500,
-                depreciation_ratio: 0.47,
-                final_category: "Appraised Item",
-                wear_score: 3.2,
+                original_price_in_rupees: 2500,
+                estimated_price_in_rupees: 950,
+                depreciation_ratio: 0.38,
+                final_category: "Small Gadget / Item",
+                device_class: "Small Gadget / Accessory",
+                wear_score: 3.0,
                 explanation: "Graded via Client-Side Heuristic Engine. For exact brand & model recognition and defect inspection, enter your free Gemini API key.",
                 anomalies: {
                     scratches: { severity: "Minor", details: "Superficial surface wear consistent with secondary market handling." },

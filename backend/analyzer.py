@@ -49,7 +49,7 @@ def get_yolo_model():
             _yolo_model = False
     return _yolo_model if _yolo_model is not False else None
 
-def calculate_calibrated_depreciation(category, brand_tier, age_years, wear_score, scratches_sev="None", dents_sev="None", cracks_sev="None", rust_sev="None"):
+def calculate_calibrated_depreciation(category, brand_tier, age_years, wear_score, scratches_sev="None", dents_sev="None", cracks_sev="None", rust_sev="None", device_class=None):
     """
     Direct valuation formula calibrated against real-world Indian second-hand market dynamics
     (Cashify, OLX, Cars24, Spinny, CeX), factoring in age, category, brand tier, and visual defects (dents, scratches, cracks).
@@ -60,13 +60,19 @@ def calculate_calibrated_depreciation(category, brand_tier, age_years, wear_scor
         age_years = 2.0
 
     # 1. Base annual retention curve by category
-    if category in ['Phone', 'Laptop']:
-        # Electronics lose ~22-25% in year 1, ~15-18% annually thereafter
+    if category in ['Accessory', 'Small Gadget']:
+        base_retention = 0.68 * ((1.0 - 0.22) ** age_years)
+        min_ratio = 0.05
+        max_ratio = 0.65
+    elif device_class == 'Budget Smartphone':
+        base_retention = 0.76 * ((1.0 - 0.18) ** age_years)
+        min_ratio = 0.08
+        max_ratio = 0.76
+    elif category in ['Phone', 'Laptop', 'Tablet']:
         base_retention = 0.82 * ((1.0 - 0.16) ** age_years)
         min_ratio = 0.08
         max_ratio = 0.82
     elif category in ['Car', 'Bike']:
-        # Vehicles depreciate ~15% in year 1, ~7-8% annually thereafter
         base_retention = 0.88 * ((1.0 - 0.08) ** age_years)
         min_ratio = 0.15
         max_ratio = 0.85
@@ -75,19 +81,19 @@ def calculate_calibrated_depreciation(category, brand_tier, age_years, wear_scor
         min_ratio = 0.60
         max_ratio = 2.50
     elif category == 'Furniture':
-        base_retention = 0.80 * ((1.0 - 0.12) ** age_years)
-        min_ratio = 0.12
-        max_ratio = 0.80
-    else:
-        base_retention = 0.80 * ((1.0 - 0.14) ** age_years)
+        base_retention = 0.78 * ((1.0 - 0.14) ** age_years)
         min_ratio = 0.10
-        max_ratio = 0.80
+        max_ratio = 0.78
+    else:
+        base_retention = 0.72 * ((1.0 - 0.16) ** age_years)
+        min_ratio = 0.08
+        max_ratio = 0.75
 
     # 2. Defect penalty mapping based on Indian second-hand inspection standards (Cashify / Spinny)
-    s_map = {'none': 0.0, 'minor': 0.06, 'moderate': 0.16, 'severe': 0.28}
-    d_map = {'none': 0.0, 'minor': 0.08, 'moderate': 0.20, 'severe': 0.38}
-    c_map = {'none': 0.0, 'minor': 0.22, 'moderate': 0.38, 'severe': 0.58}
-    r_map = {'none': 0.0, 'minor': 0.10, 'moderate': 0.22, 'severe': 0.45}
+    s_map = {'none': 0.0, 'minor': 0.07, 'moderate': 0.18, 'severe': 0.30}
+    d_map = {'none': 0.0, 'minor': 0.09, 'moderate': 0.22, 'severe': 0.40}
+    c_map = {'none': 0.0, 'minor': 0.25, 'moderate': 0.42, 'severe': 0.62}
+    r_map = {'none': 0.0, 'minor': 0.12, 'moderate': 0.25, 'severe': 0.48}
 
     total_defect_penalty = (
         s_map.get(str(scratches_sev).lower().strip(), 0.0) +
@@ -99,7 +105,7 @@ def calculate_calibrated_depreciation(category, brand_tier, age_years, wear_scor
     brand_bonus = 0.03 * (brand_tier - 1)
     wear_factor = max(0.0, (float(wear_score) - 2.0) / 10.0) * 0.12
 
-    retained_ratio = (base_retention * (1.0 - total_defect_penalty)) - wear_factor + brand_bonus
+    retained_ratio = (base_retention * (1.0 - total_defect_penalty)) - wear_factor + brandBonus if 'brandBonus' in locals() else (base_retention * (1.0 - total_defect_penalty)) - wear_factor + brand_bonus
     return float(min(max_ratio, max(min_ratio, retained_ratio)))
 
 def get_pricing_model():
@@ -139,6 +145,50 @@ def map_yolo_to_app_category(yolo_class_name):
     }
     
     return mapping.get(yolo_class_name, 'Other')
+
+def resolve_device_category_and_defaults(brand: str, model: str, raw_device_class: str = "", yolo_cat: str = "Other"):
+    combined = f"{brand} {model} {raw_device_class}".lower()
+    
+    # 1. Accessories & Small Gadgets (Check first before generic brand matches!)
+    if any(k in combined for k in [
+        'watch', 'smartwatch', 'band', 'fitbit', 'earbud', 'earbuds', 'airpod', 'airpods',
+        'headphone', 'headphones', 'earphone', 'earphones', 'tws', 'buds', 'neckband',
+        'mouse', 'keyboard', 'charger', 'cable', 'adapter', 'powerbank', 'power bank',
+        'remote', 'speaker', 'soundbar', 'pendrive', 'flash drive', 'mic', 'microphone',
+        'calculator', 'webcam', 'case', 'cover'
+    ]):
+        return "Accessory", "Small Gadget / Accessory", 2200.0, 750.0
+        
+    # 2. Tablets
+    if ('tablet' in combined or 'ipad' in combined or 'galaxy tab' in combined or 'pad' in combined) and 'laptop' not in combined:
+        return "Tablet", "Tablet", 24000.0, 9500.0
+        
+    # 3. Laptops & PCs
+    if any(k in combined for k in ['laptop', 'macbook', 'notebook', 'chromebook', 'thinkpad', 'zenbook', 'ideapad', 'pavilion', 'inspiron', 'desktop', 'monitor']):
+        return "Laptop", "Laptop / PC", 45000.0, 18000.0
+        
+    # 4. Vehicles
+    if any(k in combined for k in ['car', 'swift', 'maruti', 'hyundai', 'honda city', 'creta', 'baleno', 'innova', 'fortuner', 'wagonr', 'alto', 'sedan', 'suv', 'truck']) or yolo_cat == 'Car':
+        return "Car", "Vehicle", 550000.0, 240000.0
+    if any(k in combined for k in ['bike', 'motorcycle', 'scooter', 'activa', 'pulsar', 'royal enfield', 'bullet', 'yamaha r15', 'splendor', 'jupiter', 'ktm']) or yolo_cat == 'Bike':
+        return "Bike", "Vehicle", 85000.0, 38000.0
+        
+    # 5. Smartphones: Budget vs Mid/Flagship
+    if any(k in combined for k in ['redmi', 'realme', 'poco', 'infinix', 'tecno', 'narzo', 'galaxy m', 'galaxy f', 'vivo y', 'oppo a', 'moto g', 'nokia 1', 'nokia 2', 'nokia 3']):
+        return "Phone", "Budget Smartphone", 11000.0, 3800.0
+    if any(k in combined for k in ['iphone', 'pro max', 'galaxy s', 'galaxy z', 'pixel pro', 'oneplus', 'ultra', 'flagship', 'mobile', 'smartphone', 'phone', 'samsung']) or yolo_cat == 'Phone':
+        return "Phone", "Mid-to-Flagship Phone", 42000.0, 16000.0
+        
+    # 6. Furniture
+    if any(k in combined for k in ['chair', 'sofa', 'table', 'bed', 'desk', 'furniture', 'couch', 'wardrobe']) or yolo_cat == 'Furniture':
+        return "Furniture", "Furniture", 10000.0, 4000.0
+        
+    # 7. Real Estate
+    if any(k in combined for k in ['house', 'apartment', 'flat', 'villa', 'property']):
+        return "House", "Real Estate", 4000000.0, 4800000.0
+        
+    # Default for general objects / other
+    return "Other", "General Item", 2500.0, 850.0
 
 def preprocess_and_resize(pil_image, max_size=1024):
     """
@@ -242,44 +292,66 @@ def analyze_item(image_bytes: bytes, custom_api_key: str = None) -> dict:
                 
                 # System instructions forcing strict Indian second-hand market appraisal
                 system_prompt = (
-                    "You are a master appraiser and forensic condition inspector for the Indian second-hand market "
+                    "You are an elite forensic condition inspector and expert valuation appraiser for the Indian second-hand market "
                     "(expert in Cashify, OLX India, Spinny, Cars24, and CeX standards).\n"
-                    "The current calendar year is 2026. Use this reference year to determine age.\n\n"
-                    "Carefully inspect the image to extract true, accurate, and fair market data:\n"
-                    "1. BRAND & EXACT MODEL: Inspect logos, emblems, camera sensor layouts, speaker grilles, body contours, "
-                    "bezels, and ports. Identify the exact manufacturer (e.g. Apple, Samsung, Dell, Maruti Suzuki, Royal Enfield) "
-                    "and specific model (e.g. iPhone 13 128GB, Galaxy S21 FE, Swift VXi 1.2L, MacBook Air M1 2020).\n"
-                    "2. MANUFACTURING / LAUNCH YEAR: State the official release/manufacture year of this model (e.g. 2021). "
-                    "Set age_years = (2026 - estimated_mfg_year).\n"
-                    "3. ORIGINAL RETAIL PRICE (INR ₹): Provide the genuine average launch retail price in India when new in Rupees.\n"
-                    "4. PHYSICAL DEFECT AUDIT (SCRATCHES, DENTS, CRACKS, RUST):\n"
-                    "   - Scratches: Rate as 'None', 'Minor' (micro-scratches/hairline), 'Moderate' (visible finish scratches), or 'Severe' (deep gouges/peeled paint). Describe exact visual locations.\n"
+                    "The reference calendar year is 2026. Calculate product age using 2026.\n\n"
+                    "CRITICAL PRODUCT IDENTIFICATION & VALUATION RULES:\n"
+                    "1. IDENTIFY THE EXACT ITEM & DEVICE SCALE:\n"
+                    "   - Accurately determine what the object is and its proper tier:\n"
+                    "     * Small Gadget / Accessory: Earbuds / TWS, smartwatches, fitness bands, PC mice, keyboards, chargers, cables, power banks, remotes, small Bluetooth speakers, calculators, phone cases, adapters.\n"
+                    "     * Budget Smartphone: Redmi, Realme, Poco, Vivo Y-series, Oppo A-series, Samsung M/F-series, Moto G-series, Infinix, Tecno.\n"
+                    "     * Mid-to-Flagship Smartphone: iPhone, Galaxy S/Z, OnePlus, Pixel.\n"
+                    "     * Tablet / iPad.\n"
+                    "     * Laptop / PC / Monitor.\n"
+                    "     * Vehicle (Two-wheeler / Car).\n"
+                    "     * Furniture / Home / Other.\n"
+                    "   - DO NOT confuse small accessories, earbuds, smartwatches, or mice with laptops or flagships!\n"
+                    "   - State the exact brand and model (e.g. 'boAt Airdopes 141', 'Logitech B100 Mouse', 'Redmi Note 10 Pro', 'Noise ColorFit Pulse', 'Apple iPhone 13 128GB').\n\n"
+                    "2. OFFICIAL MANUFACTURING / LAUNCH YEAR:\n"
+                    "   - Identify the official commercial launch/mfg year for this exact model (e.g. iPhone 11 was launched in 2019, iPhone 13 in 2021, Redmi Note 10 in 2021, boAt Airdopes 141 in 2021).\n"
+                    "   - Set age_years = (2026 - estimated_mfg_year).\n\n"
+                    "3. REALISTIC ORIGINAL RETAIL PRICE (INR ₹):\n"
+                    "   - Ground the original price in realistic Indian launch retail MRP:\n"
+                    "     * Small accessories, mice, budget earphones: ₹400 - ₹2,500\n"
+                    "     * Smartwatches / TWS: ₹1,200 - ₹4,500 (premium smartwatches like Apple Watch: ₹25,000 - ₹45,000)\n"
+                    "     * Budget smartphones: ₹6,500 - ₹15,000\n"
+                    "     * Mid-to-flagship smartphones: ₹25,000 - ₹1,10,000\n"
+                    "     * Laptops: ₹30,000 - ₹95,000\n"
+                    "     * Vehicles: ₹50,000 - ₹12,00,000+\n"
+                    "   - NEVER output tens of thousands (like ₹35,000 or ₹50,000) for a small accessory, mouse, earbud, or budget phone!\n\n"
+                    "4. GRANULAR DEFECT AUDIT (SCRATCHES & DENTS):\n"
+                    "   - Scratches: Rate as 'None', 'Minor' (micro-scratches/hairline), 'Moderate' (visible finish scratches), or 'Severe' (deep gouges/peeled paint). Describe visual locations.\n"
                     "   - Dents: Rate as 'None', 'Minor' (small corner nick/micro-ding), 'Moderate' (noticeable casing dent/panel bend), or 'Severe' (structural chassis deformation). Describe visual locations.\n"
                     "   - Cracks: Rate as 'None', 'Minor' (hairline crack), 'Moderate' (visible glass/casing fissure), or 'Severe' (shattered display/broken housing).\n"
-                    "   - Rust: Rate as 'None', 'Minor', 'Moderate', or 'Severe' for oxidation or corrosion.\n"
-                    "   - Wear Score: Float from 0.0 (immaculate/sealed box) to 10.0 (completely broken/waste).\n"
-                    "5. CURRENT MARKET RESALE VALUE (INR ₹): What does this exact item in this specific cosmetic condition realistically sell for today "
-                    "in India on Cashify / OLX / Spinny? Consider market depreciation, age, scratches, and dents.\n\n"
+                    "   - Rust: Rate as 'None', 'Minor', 'Moderate', or 'Severe'.\n"
+                    "   - Wear Score: Float from 0.0 (pristine/sealed box) to 10.0 (completely broken/waste).\n\n"
+                    "5. ACCURATE SECOND-HAND RESALE VALUE (INR ₹):\n"
+                    "   - What does this exact item in this specific cosmetic condition realistically sell for today in India on Cashify / OLX / Spinny / CeX?\n"
+                    "   - Consider the product's age relative to 2026, tech obsolescence, and exact physical defects (scratches, dents, cracks).\n"
+                    "   - E.g. A 3-5 year old budget earbud with scratches sells for ₹200 to ₹400 (NOT ₹20,000!).\n"
+                    "   - E.g. A 5-year-old iPhone 13 (2021) with minor wear sells for ₹24,000 to ₹28,000.\n"
+                    "   - Resale price MUST NEVER exceed or be close to the original price for used electronics.\n\n"
                     "Return ONLY a raw JSON object conforming exactly to this schema:\n"
                     "{\n"
-                    '  "brand": "string (e.g. Apple, Maruti Suzuki, Samsung)",\n'
-                    '  "model": "string (e.g. iPhone 13 128GB, Swift VXi 1.2L)",\n'
+                    '  "device_class": "Small Gadget / Accessory" | "Budget Smartphone" | "Mid-to-Flagship Smartphone" | "Tablet" | "Laptop" | "Vehicle" | "Furniture" | "Other",\n'
+                    '  "brand": "string (e.g. boAt, Apple, Samsung, Logitech, Redmi)",\n'
+                    '  "model": "string (e.g. Airdopes 141, iPhone 13 128GB, B100 Mouse, Note 10 Pro)",\n'
                     '  "estimated_mfg_year": "string (e.g. 2021)",\n'
                     '  "age_years": float (e.g. 5.0),\n'
                     '  "brand_tier": int (1=Budget, 2=Popular/Mid-Range, 3=Premium/Luxury),\n'
-                    '  "original_price_in_rupees": float (launch price when new in India),\n'
-                    '  "estimated_resale_price_in_rupees": float (realistic current going rate in India),\n'
+                    '  "original_price_in_rupees": float,\n'
+                    '  "estimated_resale_price_in_rupees": float,\n'
                     '  "scratches_severity": "None" | "Minor" | "Moderate" | "Severe",\n'
-                    '  "scratches_details": "string (precise visual defect description)",\n'
+                    '  "scratches_details": "string",\n'
                     '  "dents_severity": "None" | "Minor" | "Moderate" | "Severe",\n'
-                    '  "dents_details": "string (precise visual defect description)",\n'
+                    '  "dents_details": "string",\n'
                     '  "cracks_severity": "None" | "Minor" | "Moderate" | "Severe",\n'
                     '  "cracks_details": "string",\n'
                     '  "rust_severity": "None" | "Minor" | "Moderate" | "Severe",\n'
                     '  "rust_details": "string",\n'
                     '  "other_wear_details": "string",\n'
                     '  "wear_score": float,\n'
-                    '  "explanation": "string (Explain visual cues that revealed the brand, model, age, and condition)"\n'
+                    '  "explanation": "string"\n'
                     "}"
                 )
                 
@@ -291,7 +363,7 @@ def analyze_item(image_bytes: bytes, custom_api_key: str = None) -> dict:
                 
                 logger.info("Invoking Gemini with fallback models...")
                 response = None
-                for model_name in ['gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-flash-latest', 'gemini-2.5-flash']:
+                for model_name in ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash-lite']:
                     try:
                         model = genai.GenerativeModel(model_name, generation_config=generation_config)
                         response = model.generate_content(contents=[system_prompt, pil_image])
@@ -313,14 +385,16 @@ def analyze_item(image_bytes: bytes, custom_api_key: str = None) -> dict:
         if not gemini_result:
             logger.info("Generating calibrated appraisal report...")
             cat_name = yolo_category if yolo_category != 'Other' else 'Appraised Item'
+            resolved_cat, resolved_class, def_orig, def_resale = resolve_device_category_and_defaults("Standard Market", cat_name, yolo_cat=yolo_category)
             gemini_result = {
+                "device_class": resolved_class,
                 "brand": "Standard Market Brand",
                 "model": f"{cat_name} (Inspected)",
                 "estimated_mfg_year": "2023",
                 "age_years": 3.0,
                 "brand_tier": 2,
-                "original_price_in_rupees": 30000.0 if cat_name in ['Phone', 'Laptop'] else (200000.0 if cat_name in ['Car', 'Bike'] else 15000.0),
-                "estimated_resale_price_in_rupees": 12000.0 if cat_name in ['Phone', 'Laptop'] else (110000.0 if cat_name in ['Car', 'Bike'] else 7000.0),
+                "original_price_in_rupees": def_orig,
+                "estimated_resale_price_in_rupees": def_resale,
                 "scratches_severity": "Minor",
                 "scratches_details": "Superficial surface wear consistent with standard secondary market handling.",
                 "dents_severity": "None",
@@ -330,42 +404,55 @@ def analyze_item(image_bytes: bytes, custom_api_key: str = None) -> dict:
                 "rust_severity": "None",
                 "rust_details": "No oxidation detected.",
                 "other_wear_details": "Aesthetic condition graded as good.",
-                "wear_score": 3.2,
+                "wear_score": 3.0,
                 "explanation": "Visual condition analyzed via Calibrated Valuation Engine."
             }
             
         # 3. Local Machine Learning - Tabular Regressor for Second-Hand Price
         pricing_model = get_pricing_model()
         
-        # Resolve category (use YOLO if confident, otherwise trust Gemini's visual class determination)
-        final_category = yolo_category
-        if yolo_category == 'Other' or yolo_confidence < 40.0:
-            # Categorize from Gemini's output
-            detected_brand_model = f"{gemini_result.get('brand', '')} {gemini_result.get('model', '')}".lower()
-            gemini_cat = "Other"
-            for keyword, mapped in [('car', 'Car'), ('auto', 'Car'), ('suv', 'Car'), ('truck', 'Car'), ('honda', 'Car'), ('suzuki', 'Car'), ('hyundai', 'Car'),
-                                    ('bike', 'Bike'), ('cycle', 'Bike'), ('motorcycle', 'Bike'),
-                                    ('phone', 'Phone'), ('samsung', 'Phone'), ('iphone', 'Phone'), ('mobile', 'Phone'),
-                                    ('laptop', 'Laptop'), ('macbook', 'Laptop'), ('dell', 'Laptop'), ('hp', 'Laptop'), ('lenovo', 'Laptop'),
-                                    ('house', 'House'), ('apartment', 'House'), ('villa', 'House'),
-                                    ('chair', 'Furniture'), ('sofa', 'Furniture'), ('table', 'Furniture'), ('bed', 'Furniture'), ('desk', 'Furniture')]:
-                if keyword in detected_brand_model:
-                    gemini_cat = mapped
-                    break
-            final_category = gemini_cat if gemini_cat != "Other" else yolo_category
+        # Resolve category and device class
+        brand_str = str(gemini_result.get('brand', ''))
+        model_str = str(gemini_result.get('model', ''))
+        dev_class_str = str(gemini_result.get('device_class', ''))
+        final_category, detected_device_class, default_orig, default_resale = resolve_device_category_and_defaults(
+            brand_str, model_str, dev_class_str, yolo_cat=yolo_category
+        )
             
         brand_tier = int(gemini_result.get('brand_tier', 2))
         
-        # Calculate accurate age based on mfg year
+        # Calculate accurate age based on mfg year relative to 2026
         try:
             mfg_yr_val = int(str(gemini_result.get('estimated_mfg_year', '2023')).split()[0])
-            calc_age = max(0.5, float(2026 - mfg_yr_val))
+            if mfg_yr_val < 1990 or mfg_yr_val > 2026:
+                mfg_yr_val = 2026 - int(float(gemini_result.get('age_years', 3.0)))
+            calc_age = max(0.2, float(2026 - mfg_yr_val))
         except (ValueError, TypeError):
-            calc_age = float(gemini_result.get('age_years', 3.0))
+            calc_age = max(0.2, float(gemini_result.get('age_years', 3.0)))
+            mfg_yr_val = int(2026 - calc_age)
         age_years = calc_age
 
-        wear_score = float(gemini_result.get('wear_score', 3.0))
-        original_price = float(gemini_result.get('original_price_in_rupees', 10000.0))
+        wear_score = min(10.0, max(0.0, float(gemini_result.get('wear_score', 3.0))))
+        
+        # Calibrate original price
+        try:
+            raw_orig = float(gemini_result.get('original_price_in_rupees', 0.0) or 0.0)
+            if raw_orig <= 0.0:
+                original_price = default_orig
+            else:
+                # Safeguard: If accessory or budget phone, clamp unrealistic prices
+                if final_category == 'Accessory':
+                    is_prem = any(k in f"{brand_str} {model_str}".lower() for k in ['apple', 'airpod', 'sony', 'bose', 'sennheiser', 'galaxy watch'])
+                    if not is_prem and raw_orig > 8000.0:
+                        original_price = min(raw_orig, 4000.0)
+                    else:
+                        original_price = raw_orig
+                elif detected_device_class == 'Budget Smartphone' and raw_orig > 20000.0:
+                    original_price = min(raw_orig, 15000.0)
+                else:
+                    original_price = raw_orig
+        except (ValueError, TypeError):
+            original_price = default_orig
         
         # Predict defect-adjusted depreciation ratio
         calibrated_ratio = calculate_calibrated_depreciation(
@@ -376,19 +463,23 @@ def analyze_item(image_bytes: bytes, custom_api_key: str = None) -> dict:
             scratches_sev=gemini_result.get("scratches_severity", "None"),
             dents_sev=gemini_result.get("dents_severity", "None"),
             cracks_sev=gemini_result.get("cracks_severity", "None"),
-            rust_sev=gemini_result.get("rust_severity", "None")
+            rust_sev=gemini_result.get("rust_severity", "None"),
+            device_class=detected_device_class
         )
         
         formula_price = original_price * calibrated_ratio
         llm_market_price = float(gemini_result.get("estimated_resale_price_in_rupees", 0.0) or 0.0)
         
         # Grounded blended valuation
-        if llm_market_price > 0 and llm_market_price < original_price:
-            estimated_secondhand_price = round((llm_market_price * 0.65) + (formula_price * 0.35), 2)
-            depreciation_ratio = round(estimated_secondhand_price / max(1.0, original_price), 4)
+        if llm_market_price > 0 and llm_market_price < (original_price * 0.95):
+            estimated_secondhand_price = round((llm_market_price * 0.60) + (formula_price * 0.40), 2)
         else:
             estimated_secondhand_price = round(formula_price, 2)
-            depreciation_ratio = round(calibrated_ratio, 4)
+            
+        # Ensure bounds: resale price cannot exceed 85% of original price and has realistic floor
+        min_floor = original_price * (0.05 if final_category == 'Accessory' else 0.08)
+        estimated_secondhand_price = max(min_floor, min(original_price * 0.85, estimated_secondhand_price))
+        depreciation_ratio = round(estimated_secondhand_price / max(1.0, original_price), 4)
         
         # 4. Construct complete response payload
         results_payload = {
