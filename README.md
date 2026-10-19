@@ -40,51 +40,47 @@ secondhand-analyzer/
 
 ---
 
-## 🚀 Quick Start on Localhost (1-Click Run)
+## 🚀 Local Installation & Execution
 
-The application is heavily optimized to run on **your own localhost server** using consumer or low-end hardware (2GB–4GB RAM, dual-core CPUs) without freezing or crashing when multiple users open it.
+### 1. Prerequisites
+- Python 3.10+ installed on Windows.
+- A free Gemini API key from [Google AI Studio](https://aistudio.google.com/).
 
-### Option 1: 1-Click Launchers
-- **Windows:** Double-click [`run.bat`](file:///C:/Users/Slmed/.gemini/antigravity/scratch/secondhand-analyzer/run.bat)
-- **Linux / macOS:** Run `./run.sh` (or `bash run.sh`)
-- **Direct Terminal:** Run `python run.py`
+### 2. Setup environment on Windows
+Open PowerShell and navigate to the project directory:
 
-This will automatically:
-1. Bind to an open port (default `8000`).
-2. Detect your local Wi-Fi IP so other devices (e.g. your smartphone) on your network can access it (`http://<your-local-ip>:8000`).
-3. Automatically open your default web browser to `http://localhost:8000`.
-
----
-
-## ⚡ Low-End Device & Multi-User Crash Prevention
-
-When many users open and scan items simultaneously, typical ML apps freeze the host CPU and cause Out-Of-Memory (OOM) crashes. This application implements 4 layers of protection:
-
-1. **Async AnyIO Threadpool (`run_in_threadpool`):**
-   - Synchronous image manipulation and model predictions are offloaded from the main asyncio event loop.
-   - The server handles hundreds of concurrent connections, web visitors, and health checks without dropping a single packet.
-2. **Concurrency Semaphore Queue (`asyncio.Semaphore`):**
-   - Limits concurrent heavy ML inferences to your hardware's CPU capacity.
-   - If 10 users upload images at the exact same second on a 2GB RAM device, requests queue safely and process in order instead of spiking RAM and crashing the server.
-3. **Hardware Thread Capping:**
-   - PyTorch and OpenMP are restricted to 2 CPU threads (`torch.set_num_threads(2)`, `OMP_NUM_THREADS=2`), preventing CPU pegging at 100% and keeping the host system responsive.
-4. **RAM-Aware Model Initialization:**
-   - If available RAM is below 450 MB, heavy model pre-warming is deferred to conserve system memory.
-5. **Client-Side Image Canvas Compression:**
-   - Smartphone camera photos (10MB+) are compressed in the user's browser down to ~90KB before transmission, sparing low-end localhost servers from decompressing massive bitmaps into RAM.
-
----
-
-### Manual Setup (Optional)
-If you prefer running step-by-step:
 ```powershell
-# 1. Install dependencies
-pip install -r requirements.txt
+# Create virtual environment
+python -m venv venv
 
-# 2. Run the server
-python run.py
+# Activate virtual environment
+.\venv\Scripts\Activate.ps1
+
+# Install requirements
+pip install -r requirements.txt
 ```
-Open `http://localhost:8000` in your web browser.
+
+### 3. Configure API Key
+Duplicate `.env.example` as `.env`:
+```powershell
+copy .env.example .env
+```
+Open `.env` and fill in your `GEMINI_API_KEY`:
+```env
+GEMINI_API_KEY=AIzaSy...
+```
+
+### 4. Run the Application
+Start the FastAPI server:
+```powershell
+python -m uvicorn backend.app:app --reload --host 127.0.0.1 --port 8000
+```
+- **Self-Generating ML Model**: The backend will automatically trigger `train_model.py` on startup if `price_model.joblib` is missing, training your tabular price predictor in milliseconds.
+- Open `http://127.0.0.1:8000` in your web browser.
+
+---
+
+## 📈 Windows 11/12 Low-RAM Pagefile Optimization
 
 With only 8GB of RAM, loading PyTorch dependencies and models can sometimes trigger Windows Out-Of-Memory (OOM) exceptions. To prevent system crashes, configure a virtual memory pagefile to back system memory with SSD storage:
 
