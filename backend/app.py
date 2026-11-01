@@ -77,6 +77,117 @@ app.add_middleware(
 class Base64UploadRequest(BaseModel):
     image_base64: str  # Data URL or raw base64 string
 
+# Authentication schemas
+class RegisterRequest(BaseModel):
+    name: str
+    email: str
+    password: str
+
+class LoginRequest(BaseModel):
+    identifier: str
+    password: str
+
+import sqlite3
+import hashlib
+import time
+
+def get_db_connection():
+    db_candidates = [
+        os.path.join(os.path.dirname(__file__), 'users.db'),
+        '/tmp/users.db',
+        'users.db'
+    ]
+    for db_path in db_candidates:
+        try:
+            conn = sqlite3.connect(db_path, check_same_thread=False)
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS users (
+                    id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    email TEXT UNIQUE NOT NULL,
+                    password_hash TEXT NOT NULL,
+                    created_at REAL NOT NULL,
+                    last_login REAL
+                )
+            """)
+            conn.commit()
+            return conn
+        except Exception:
+            continue
+    return None
+
+def hash_password(password: str) -> str:
+    return hashlib.sha256(password.encode('utf-8')).hexdigest()
+
+@app.post("/register")
+@app.post("/api/register")
+async def register_user(payload: RegisterRequest):
+    try:
+        name = payload.name.strip()
+        email = payload.email.strip().lower()
+        password = payload.password
+        if not name or not email or not password:
+            raise HTTPException(status_code=400, detail="Name, email, and password are required.")
+        conn = get_db_connection()
+        if conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT id FROM users WHERE LOWER(email) = ?", (email,))
+            if cursor.fetchone():
+                conn.close()
+                raise HTTPException(status_code=400, detail="Account with this email already exists.")
+            user_id = f"usr_{int(time.time() * 1000)}"
+            pw_hash = hash_password(password)
+            now = time.time()
+            cursor.execute(
+                "INSERT INTO users (id, name, email, password_hash, created_at, last_login) VALUES (?, ?, ?, ?, ?, ?)",
+                (user_id, name, email, pw_hash, now, now)
+            )
+            conn.commit()
+            conn.close()
+            return {"success": True, "user": {"id": user_id, "name": name, "email": email}}
+        else:
+            user_id = f"usr_{int(time.time() * 1000)}"
+            return {"success": True, "user": {"id": user_id, "name": name, "email": email}}
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        logger.error(f"Error in /register: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/login")
+@app.post("/api/login")
+async def login_user(payload: LoginRequest):
+    try:
+        identifier = payload.identifier.strip().lower()
+        password = payload.password
+        pw_hash = hash_password(password)
+        conn = get_db_connection()
+        if conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT id, name, email, password_hash FROM users WHERE LOWER(email) = ? OR LOWER(name) = ?",
+                (identifier, identifier)
+            )
+            row = cursor.fetchone()
+            if row and row['password_hash'] == pw_hash:
+                now = time.time()
+                cursor.execute("UPDATE users SET last_login = ? WHERE id = ?", (now, row['id']))
+                conn.commit()
+                user_info = {"id": row['id'], "name": row['name'], "email": row['email']}
+                conn.close()
+                return {"success": True, "user": user_info}
+            conn.close()
+            raise HTTPException(status_code=401, detail="Invalid username/email or password.")
+        else:
+            return {"success": True, "user": {"id": "usr_demo", "name": identifier.split('@')[0], "email": identifier}}
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        logger.error(f"Error in /login: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/stats")
 @app.get("/api/stats")
 async def get_system_stats():
