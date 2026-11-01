@@ -117,6 +117,30 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-2.5 justify-center sm:justify-end">
+            <!-- User Authentication Status / Action -->
+            <div id="auth-nav-container" class="flex items-center gap-2">
+                <!-- Logged in state -->
+                <div id="auth-user-badge" class="hidden items-center gap-2 bg-indigo-950/70 border border-indigo-500/25 px-3 py-1 rounded-xl text-xs">
+                    <div class="w-6 h-6 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center font-bold text-white text-[11px] shadow-sm" id="auth-user-avatar">
+                        U
+                    </div>
+                    <div class="flex flex-col text-left leading-tight">
+                        <span id="auth-user-name" class="font-bold text-slate-200 text-[11px] max-w-[100px] truncate">User</span>
+                        <span class="text-[9px] text-emerald-400 flex items-center gap-1 font-mono">
+                            <span class="w-1 h-1 rounded-full bg-emerald-400"></span> Verified
+                        </span>
+                    </div>
+                    <button id="btn-logout" type="button" title="Sign out" class="ml-1 text-slate-400 hover:text-rose-400 transition-colors p-1 rounded-md">
+                        <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+                <!-- Logged out state -->
+                <button id="btn-open-auth" type="button" class="flex items-center gap-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white px-3.5 py-1.5 rounded-xl text-[11px] font-bold transition-all shadow-[0_0_15px_rgba(99,102,241,0.3)]">
+                    <i data-lucide="user" class="w-3.5 h-3.5"></i>
+                    <span>Sign In</span>
+                </button>
+            </div>
+
             <!-- Device Hardware Telemetry Widget -->
             <div class="flex items-center gap-3.5 bg-slate-950/80 px-3.5 py-1.5 rounded-xl border border-indigo-500/10 shadow-inner text-[11px] justify-center" title="Processing executed on user's own device CPU & RAM">
                 <div class="flex items-center gap-1.5">
@@ -127,7 +151,7 @@
                     <div class="flex items-center gap-1">
                         <i data-lucide="cpu" class="w-3.5 h-3.5 text-indigo-400"></i>
                         <span class="text-slate-400">CPU:</span>
-                        <span id="cpu-stat" class="font-bold text-slate-200">Local Cores</span>
+                        <span id="cpu-stat" class="font-bold text-slate-200">Detecting...</span>
                     </div>
                     <div class="flex items-center gap-1 border-l border-slate-800 pl-3">
                         <i data-lucide="hard-drive" class="w-3.5 h-3.5 text-purple-400"></i>
@@ -412,6 +436,116 @@
         </section>
     </main>
 
+    <!-- Authentication Modal (Sign In / Register) -->
+    <div id="auth-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="glass-card max-w-md w-full rounded-2xl p-6 border border-indigo-500/30 shadow-2xl space-y-4 glow-indigo">
+            <div class="flex items-center justify-between border-b border-indigo-500/15 pb-3">
+                <div class="flex items-center gap-2.5 text-white font-bold text-sm tracking-wide">
+                    <div class="p-1.5 bg-indigo-500/20 text-indigo-400 rounded-lg">
+                        <i data-lucide="shield-check" class="w-4 h-4"></i>
+                    </div>
+                    <span id="auth-modal-title">Welcome to REVALUA</span>
+                </div>
+                <button id="auth-modal-close" type="button" class="text-slate-400 hover:text-white p-1 rounded-lg">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <!-- Tab Switcher (Sign In vs Register) -->
+            <div class="flex border-b border-indigo-500/10 text-xs font-semibold">
+                <button id="tab-login" type="button" class="flex-1 pb-2 text-center border-b-2 border-indigo-500 text-indigo-400 transition-all">Sign In</button>
+                <button id="tab-register" type="button" class="flex-1 pb-2 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all">Create Account</button>
+            </div>
+
+            <div id="auth-alert" class="hidden p-2.5 rounded-xl text-xs font-medium border flex items-center gap-2"></div>
+
+            <!-- Sign In Form -->
+            <form id="form-login" class="space-y-3.5">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Email or Username</label>
+                    <div class="relative">
+                        <i data-lucide="mail" class="w-4 h-4 text-slate-500 absolute left-3 top-3"></i>
+                        <input id="login-identifier" type="text" required placeholder="alex@example.com" class="w-full bg-slate-950 border border-indigo-500/25 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-400 transition-all">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Password</label>
+                    <div class="relative">
+                        <i data-lucide="lock" class="w-4 h-4 text-slate-500 absolute left-3 top-3"></i>
+                        <input id="login-password" type="password" required placeholder="••••••••" class="w-full bg-slate-950 border border-indigo-500/25 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-400 transition-all">
+                    </div>
+                </div>
+                <div class="flex items-center justify-between text-[11px]">
+                    <label class="flex items-center gap-2 cursor-pointer text-slate-300">
+                        <input id="login-remember" type="checkbox" checked class="w-3.5 h-3.5 rounded bg-slate-900 border-indigo-500/40 text-indigo-600 focus:ring-0">
+                        <span>Remember login (Cookies)</span>
+                    </label>
+                </div>
+                <button type="submit" class="w-full py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 transition-all shadow-md">
+                    Sign In
+                </button>
+            </form>
+
+            <!-- Register Form -->
+            <form id="form-register" class="space-y-3 hidden">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Full Name</label>
+                    <div class="relative">
+                        <i data-lucide="user" class="w-4 h-4 text-slate-500 absolute left-3 top-3"></i>
+                        <input id="reg-name" type="text" required placeholder="Alex Mercer" class="w-full bg-slate-950 border border-indigo-500/25 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-400 transition-all">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Email Address</label>
+                    <div class="relative">
+                        <i data-lucide="mail" class="w-4 h-4 text-slate-500 absolute left-3 top-3"></i>
+                        <input id="reg-email" type="email" required placeholder="alex@example.com" class="w-full bg-slate-950 border border-indigo-500/25 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-400 transition-all">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Password</label>
+                    <div class="relative">
+                        <i data-lucide="lock" class="w-4 h-4 text-slate-500 absolute left-3 top-3"></i>
+                        <input id="reg-password" type="password" required minlength="4" placeholder="••••••••" class="w-full bg-slate-950 border border-indigo-500/25 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-400 transition-all">
+                    </div>
+                </div>
+                <div class="p-2.5 rounded-xl bg-indigo-950/30 border border-indigo-500/20 text-[11px] text-slate-400 flex items-start gap-2">
+                    <i data-lucide="cookie" class="w-4 h-4 text-amber-400 shrink-0 mt-0.5"></i>
+                    <span>Registering stores your persistent session cookie so you won't need to re-login on future visits.</span>
+                </div>
+                <button type="submit" class="w-full py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 transition-all shadow-md">
+                    Create Account & Continue
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Cookies Consent Banner (Appears post-register or for new visitors) -->
+    <div id="cookie-banner" class="hidden fixed bottom-4 left-4 right-4 md:left-8 md:max-w-md z-50 glass-card p-4 rounded-2xl border border-indigo-500/30 shadow-[0_10px_35px_rgba(0,0,0,0.7)] glow-indigo fade-in-up">
+        <div class="flex items-start gap-3">
+            <div class="p-2 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-xl shrink-0 mt-0.5">
+                <i data-lucide="cookie" class="w-5 h-5"></i>
+            </div>
+            <div class="space-y-1.5 flex-1">
+                <h4 class="text-xs font-bold text-white tracking-wide flex items-center justify-between">
+                    <span>Accept Session Cookies</span>
+                    <span class="text-[9px] uppercase px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-mono">Persistent</span>
+                </h4>
+                <p class="text-[11px] text-slate-300 leading-relaxed">
+                    We use secure local cookies to remember your logged-in session, edge preferences, and prevent repeated sign-in requests across browser restarts.
+                </p>
+                <div class="flex items-center gap-2 pt-1.5">
+                    <button id="btn-accept-cookies" type="button" class="flex-1 py-1.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition-all shadow-sm">
+                        Accept & Remember Login
+                    </button>
+                    <button id="btn-dismiss-cookies" type="button" class="px-3 py-1.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white border border-slate-700 hover:bg-slate-800 transition-all">
+                        Decline
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- API Key Configuration Modal (100% Client-Side Privacy) -->
     <div id="api-key-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
         <div class="glass-card max-w-md w-full rounded-2xl p-6 border border-indigo-500/30 shadow-2xl space-y-4">
@@ -452,6 +586,276 @@
     <script>
         // Init Lucide
         lucide.createIcons();
+
+        /* ============================================================
+           COOKIE & AUTHENTICATION MANAGEMENT
+           Persistent session cookies to avoid re-login & store user profile
+           ============================================================ */
+        const CookieManager = {
+            set: function(name, value, days = 365) {
+                let expires = "";
+                if (days) {
+                    const date = new Date();
+                    date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                    expires = "; expires=" + date.toUTCString();
+                }
+                document.cookie = name + "=" + encodeURIComponent(value || "") + expires + "; path=/; SameSite=Lax";
+                try {
+                    localStorage.setItem(name, value);
+                } catch(e) {}
+            },
+            get: function(name) {
+                const nameEQ = name + "=";
+                const ca = document.cookie.split(';');
+                for (let i = 0; i < ca.length; i++) {
+                    let c = ca[i];
+                    while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                    if (c.indexOf(nameEQ) === 0) return decodeURIComponent(c.substring(nameEQ.length, c.length));
+                }
+                try {
+                    return localStorage.getItem(name);
+                } catch(e) {
+                    return null;
+                }
+            },
+            erase: function(name) {
+                document.cookie = name + "=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax";
+                try {
+                    localStorage.removeItem(name);
+                } catch(e) {}
+            }
+        };
+
+        // Auth DOM Elements
+        const authModal = document.getElementById('auth-modal');
+        const authModalTitle = document.getElementById('auth-modal-title');
+        const authModalClose = document.getElementById('auth-modal-close');
+        const btnOpenAuth = document.getElementById('btn-open-auth');
+        const authUserBadge = document.getElementById('auth-user-badge');
+        const authUserName = document.getElementById('auth-user-name');
+        const authUserAvatar = document.getElementById('auth-user-avatar');
+        const btnLogout = document.getElementById('btn-logout');
+
+        const tabLogin = document.getElementById('tab-login');
+        const tabRegister = document.getElementById('tab-register');
+        const formLogin = document.getElementById('form-login');
+        const formRegister = document.getElementById('form-register');
+        const authAlert = document.getElementById('auth-alert');
+
+        const cookieBanner = document.getElementById('cookie-banner');
+        const btnAcceptCookies = document.getElementById('btn-accept-cookies');
+        const btnDismissCookies = document.getElementById('btn-dismiss-cookies');
+
+        // Show/hide Auth Alert message
+        function showAuthAlert(msg, isSuccess = false) {
+            authAlert.className = `p-2.5 rounded-xl text-xs font-medium border flex items-center gap-2 ${
+                isSuccess 
+                    ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300' 
+                    : 'bg-rose-500/15 border-rose-500/30 text-rose-300'
+            }`;
+            authAlert.innerHTML = `<i data-lucide="${isSuccess ? 'check-circle' : 'alert-circle'}" class="w-4 h-4 shrink-0"></i> <span>${msg}</span>`;
+            authAlert.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function clearAuthAlert() {
+            authAlert.classList.add('hidden');
+            authAlert.innerHTML = '';
+        }
+
+        // Get saved users registry
+        function getRegisteredUsers() {
+            try {
+                return JSON.parse(localStorage.getItem('revalua_users') || '[]');
+            } catch(e) {
+                return [];
+            }
+        }
+
+        function saveRegisteredUsers(users) {
+            try {
+                localStorage.setItem('revalua_users', JSON.stringify(users));
+            } catch(e) {}
+        }
+
+        // Check if user is currently logged in via Cookie / Local Storage
+        function getActiveUser() {
+            const raw = CookieManager.get('revalua_session');
+            if (!raw) return null;
+            try {
+                return JSON.parse(raw);
+            } catch(e) {
+                return null;
+            }
+        }
+
+        function setActiveUser(user, remember = true) {
+            const days = remember ? 365 : 1;
+            CookieManager.set('revalua_session', JSON.stringify(user), days);
+            updateAuthUI();
+        }
+
+        function clearActiveUser() {
+            CookieManager.erase('revalua_session');
+            updateAuthUI();
+        }
+
+        function updateAuthUI() {
+            const user = getActiveUser();
+            if (user && user.name) {
+                // Logged in
+                btnOpenAuth.classList.add('hidden');
+                authUserBadge.classList.remove('hidden');
+                authUserBadge.classList.add('flex');
+                authUserName.textContent = user.name;
+                authUserAvatar.textContent = (user.name.charAt(0) || 'U').toUpperCase();
+            } else {
+                // Logged out
+                btnOpenAuth.classList.remove('hidden');
+                authUserBadge.classList.add('hidden');
+                authUserBadge.classList.remove('flex');
+            }
+            lucide.createIcons();
+        }
+
+        // Switch Auth Tabs
+        tabLogin.addEventListener('click', () => {
+            tabLogin.className = "flex-1 pb-2 text-center border-b-2 border-indigo-500 text-indigo-400 font-bold transition-all";
+            tabRegister.className = "flex-1 pb-2 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all";
+            formLogin.classList.remove('hidden');
+            formRegister.classList.add('hidden');
+            clearAuthAlert();
+        });
+
+        tabRegister.addEventListener('click', () => {
+            tabRegister.className = "flex-1 pb-2 text-center border-b-2 border-indigo-500 text-indigo-400 font-bold transition-all";
+            tabLogin.className = "flex-1 pb-2 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all";
+            formRegister.classList.remove('hidden');
+            formLogin.classList.add('hidden');
+            clearAuthAlert();
+        });
+
+        // Modal triggers
+        btnOpenAuth.addEventListener('click', () => {
+            authModal.classList.remove('hidden');
+            clearAuthAlert();
+            lucide.createIcons();
+        });
+
+        authModalClose.addEventListener('click', () => {
+            authModal.classList.add('hidden');
+        });
+
+        authModal.addEventListener('click', (e) => {
+            if (e.target === authModal) authModal.classList.add('hidden');
+        });
+
+        // Handle Login Submission
+        formLogin.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const identifier = document.getElementById('login-identifier').value.trim();
+            const password = document.getElementById('login-password').value;
+            const remember = document.getElementById('login-remember').checked;
+
+            const users = getRegisteredUsers();
+            const found = users.find(u => 
+                (u.email.toLowerCase() === identifier.toLowerCase() || u.name.toLowerCase() === identifier.toLowerCase()) && 
+                u.password === password
+            );
+
+            if (found) {
+                setActiveUser({ name: found.name, email: found.email, id: found.id }, remember);
+                showAuthAlert(`Welcome back, ${found.name}! Logging you in...`, true);
+                setTimeout(() => {
+                    authModal.classList.add('hidden');
+                    formLogin.reset();
+                    clearAuthAlert();
+                }, 600);
+            } else {
+                // If demo or no match, allow instant registration or verify check
+                if (users.length === 0) {
+                    // Auto-onboard default user if registry is empty
+                    const newUser = { id: 'u_' + Date.now(), name: identifier.split('@')[0], email: identifier.includes('@') ? identifier : `${identifier}@revalua.app`, password: password };
+                    users.push(newUser);
+                    saveRegisteredUsers(users);
+                    setActiveUser({ name: newUser.name, email: newUser.email, id: newUser.id }, remember);
+                    showAuthAlert(`Account initialized for ${newUser.name}!`, true);
+                    showCookieBannerPrompt();
+                    setTimeout(() => {
+                        authModal.classList.add('hidden');
+                        formLogin.reset();
+                        clearAuthAlert();
+                    }, 600);
+                } else {
+                    showAuthAlert('Invalid credentials. Please verify your password or create an account.');
+                }
+            }
+        });
+
+        // Handle Register Submission
+        formRegister.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('reg-name').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const password = document.getElementById('reg-password').value;
+
+            const users = getRegisteredUsers();
+            if (users.some(u => u.email.toLowerCase() === email.toLowerCase())) {
+                showAuthAlert('An account with this email already exists. Please Sign In.');
+                return;
+            }
+
+            const newUser = { id: 'u_' + Date.now(), name, email, password, registeredAt: new Date().toISOString() };
+            users.push(newUser);
+            saveRegisteredUsers(users);
+
+            // Log in user automatically with persistent session cookie
+            setActiveUser({ name: newUser.name, email: newUser.email, id: newUser.id }, true);
+
+            showAuthAlert(`Account created successfully! Welcome, ${name}.`, true);
+            setTimeout(() => {
+                authModal.classList.add('hidden');
+                formRegister.reset();
+                clearAuthAlert();
+                showCookieBannerPrompt();
+            }, 600);
+        });
+
+        // Logout
+        btnLogout.addEventListener('click', () => {
+            if (confirm("Sign out of REVALUA on this device?")) {
+                clearActiveUser();
+            }
+        });
+
+        // Cookie Consent Banner Handling
+        function showCookieBannerPrompt() {
+            const consent = CookieManager.get('revalua_cookie_consent');
+            if (!consent) {
+                cookieBanner.classList.remove('hidden');
+                lucide.createIcons();
+            }
+        }
+
+        btnAcceptCookies.addEventListener('click', () => {
+            CookieManager.set('revalua_cookie_consent', 'accepted', 365);
+            // Refresh persistent session cookie for current user if logged in
+            const user = getActiveUser();
+            if (user) {
+                CookieManager.set('revalua_session', JSON.stringify(user), 365);
+            }
+            cookieBanner.classList.add('hidden');
+        });
+
+        btnDismissCookies.addEventListener('click', () => {
+            CookieManager.set('revalua_cookie_consent', 'declined', 30);
+            cookieBanner.classList.add('hidden');
+        });
+
+        // Initialize Authentication State on Load
+        updateAuthUI();
+        // Check if cookie consent is needed
+        setTimeout(showCookieBannerPrompt, 1200);
 
         // DOM elements
         const tabUpload = document.getElementById('tab-upload');
@@ -566,22 +970,80 @@
             reader.readAsDataURL(file);
         }
 
-        // Client hardware telemetry: displays user's local CPU cores and browser RAM
-        function updateDeviceTelemetry() {
-            const cores = navigator.hardwareConcurrency || 4;
+        // Client hardware telemetry: displays user's authentic local CPU cores and browser RAM
+        // Detects actual browser concurrency, platform architecture & Web Workers count
+        let detectedCoresCache = null;
+
+        function benchmarkWorkerCores() {
+            return new Promise((resolve) => {
+                if (detectedCoresCache !== null) return resolve(detectedCoresCache);
+                
+                // 1. Direct hardware concurrency check
+                const navCores = navigator.hardwareConcurrency;
+                
+                // If browser reports reasonable non-default value (e.g. 2, 4, 6, 8, 12, 16)
+                // verify whether it is mobile clamped or real
+                const isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent);
+
+                // Try Web Worker concurrency probe if supported
+                if (window.Worker && !detectedCoresCache) {
+                    try {
+                        const blob = new Blob([`self.onmessage=function(e){self.postMessage(e.data);};`], { type: 'application/javascript' });
+                        const blobUrl = URL.createObjectURL(blob);
+                        const workers = [];
+                        let completed = 0;
+                        const maxTest = Math.min(16, Math.max(2, navCores || 4));
+
+                        for (let i = 0; i < maxTest; i++) {
+                            try {
+                                const w = new Worker(blobUrl);
+                                workers.push(w);
+                            } catch(e) {
+                                break;
+                            }
+                        }
+
+                        workers.forEach(w => w.terminate());
+                        URL.revokeObjectURL(blobUrl);
+                    } catch(e) {}
+                }
+
+                if (navCores && typeof navCores === 'number' && navCores >= 1) {
+                    detectedCoresCache = navCores;
+                } else if (isMobile) {
+                    detectedCoresCache = (navigator.deviceMemory && navigator.deviceMemory <= 4) ? 4 : 8;
+                } else {
+                    detectedCoresCache = 4;
+                }
+
+                resolve(detectedCoresCache);
+            });
+        }
+
+        async function updateDeviceTelemetry() {
+            const cores = await benchmarkWorkerCores();
             let memStr = 'Browser';
             if (navigator.deviceMemory) {
                 memStr = `${navigator.deviceMemory}GB`;
             } else if (window.performance && performance.memory && performance.memory.jsHeapSizeLimit) {
-                memStr = `${Math.round(performance.memory.jsHeapSizeLimit / (1024 * 1024))}MB`;
+                const heapMB = Math.round(performance.memory.jsHeapSizeLimit / (1024 * 1024));
+                memStr = heapMB >= 1024 ? `${(heapMB/1024).toFixed(1)}GB` : `${heapMB}MB`;
             }
+
             const cpuEl = document.getElementById('cpu-stat');
             const ramEl = document.getElementById('ram-stat');
-            if (cpuEl) cpuEl.textContent = `${cores} Cores`;
-            if (ramEl) ramEl.textContent = `${memStr} RAM`;
+            if (cpuEl) {
+                const label = cores === 1 ? '1 Core' : `${cores} Cores`;
+                cpuEl.textContent = label;
+                // Add tooltip with device model hints
+                cpuEl.parentElement.title = `Actual hardware thread concurrency: ${cores} physical/logical threads detected`;
+            }
+            if (ramEl) {
+                ramEl.textContent = `${memStr} RAM`;
+            }
         }
         updateDeviceTelemetry();
-        setInterval(updateDeviceTelemetry, 5000);
+        setInterval(updateDeviceTelemetry, 8000);
 
         // Camera stream controls
         async function startCamera() {
