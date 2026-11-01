@@ -169,8 +169,172 @@
         </div>
     </header>
 
-    <!-- Main Container -->
-    <main class="flex-grow max-w-6xl w-full mx-auto px-4 mt-6 grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+    <!-- View 1: Authentication & Landing View (Shown first to unauthenticated visitors) -->
+    <div id="view-auth" class="flex-grow flex items-center justify-center px-4 py-8 md:py-12 w-full max-w-5xl mx-auto">
+        <div class="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            
+            <!-- Left Info Column -->
+            <div class="lg:col-span-6 space-y-6 text-center lg:text-left">
+                <div class="inline-flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/30 px-3.5 py-1.5 rounded-full text-xs font-semibold text-indigo-300 shadow-sm">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>AI Client-Edge Second-Hand Valuation</span>
+                </div>
+                
+                <h2 class="text-3xl md:text-5xl font-black text-white tracking-tight leading-tight">
+                    Inspect, Grade & Price <br>
+                    <span class="bg-gradient-to-r from-indigo-400 via-purple-400 to-emerald-400 bg-clip-text text-transparent">Any Used Device</span>
+                </h2>
+                
+                <p class="text-sm md:text-base text-slate-300 leading-relaxed max-w-lg mx-auto lg:mx-0">
+                    Get forensic defect recognition (scratches, dents, cracks), authentic manufacturing launch MRP, and real Indian market resale prices calculated in seconds directly on your own device hardware.
+                </p>
+
+                <!-- Value Props Pills -->
+                <div class="grid grid-cols-2 gap-3 text-xs font-medium max-w-md mx-auto lg:mx-0">
+                    <div class="p-3 rounded-xl bg-slate-900/80 border border-indigo-500/15 flex items-center gap-2.5 text-slate-200">
+                        <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400 shrink-0"></i>
+                        <span>100% Free & Private</span>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-900/80 border border-indigo-500/15 flex items-center gap-2.5 text-slate-200">
+                        <i data-lucide="cpu" class="w-4 h-4 text-indigo-400 shrink-0"></i>
+                        <span>Runs On Device CPU</span>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-900/80 border border-indigo-500/15 flex items-center gap-2.5 text-slate-200">
+                        <i data-lucide="cookie" class="w-4 h-4 text-amber-400 shrink-0"></i>
+                        <span>Persistent Login</span>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-900/80 border border-indigo-500/15 flex items-center gap-2.5 text-slate-200">
+                        <i data-lucide="zap" class="w-4 h-4 text-purple-400 shrink-0"></i>
+                        <span>Instant 60fps Scan</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Authentication Card & Cookie Consent -->
+            <div class="lg:col-span-6 w-full max-w-md mx-auto">
+                <div class="glass-card rounded-3xl p-6 md:p-8 border border-indigo-500/30 shadow-[0_20px_50px_rgba(0,0,0,0.6)] glow-indigo">
+                    
+                    <!-- Step 1: Sign In / Register Card -->
+                    <div id="auth-panel" class="space-y-5">
+                        <div class="flex items-center justify-between pb-3 border-b border-indigo-500/15">
+                            <div class="flex items-center gap-2.5">
+                                <div class="p-2 bg-indigo-500/20 text-indigo-400 rounded-xl">
+                                    <i data-lucide="lock" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-base font-bold text-white tracking-wide">Member Authentication</h3>
+                                    <p class="text-[11px] text-slate-400">Sign in or register to unlock scanner console</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tab Switcher -->
+                        <div class="flex border-b border-indigo-500/10 text-xs font-semibold">
+                            <button id="tab-login" type="button" class="flex-1 pb-2.5 text-center border-b-2 border-indigo-500 text-indigo-400 font-bold transition-all">Sign In</button>
+                            <button id="tab-register" type="button" class="flex-1 pb-2.5 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all">Create Account</button>
+                        </div>
+
+                        <div id="auth-alert" class="hidden p-3 rounded-xl text-xs font-medium border flex items-center gap-2"></div>
+
+                        <!-- Sign In Form -->
+                        <form id="form-login" class="space-y-4">
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Email or Username</label>
+                                <div class="relative">
+                                    <i data-lucide="mail" class="w-4 h-4 text-slate-500 absolute left-3 top-3"></i>
+                                    <input id="login-identifier" type="text" required placeholder="alex@example.com" class="w-full bg-slate-950/80 border border-indigo-500/25 rounded-xl pl-9 pr-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-400 transition-all font-medium">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Password</label>
+                                <div class="relative">
+                                    <i data-lucide="lock" class="w-4 h-4 text-slate-500 absolute left-3 top-3"></i>
+                                    <input id="login-password" type="password" required placeholder="••••••••" class="w-full bg-slate-950/80 border border-indigo-500/25 rounded-xl pl-9 pr-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-400 transition-all">
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between text-xs">
+                                <label class="flex items-center gap-2 cursor-pointer text-slate-300 select-none">
+                                    <input id="login-remember" type="checkbox" checked class="w-4 h-4 rounded bg-slate-900 border-indigo-500/40 text-indigo-600 focus:ring-0">
+                                    <span class="text-[11px]">Remember login (Cookies)</span>
+                                </label>
+                            </div>
+                            <button type="submit" class="w-full py-3 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 transition-all shadow-[0_4px_20px_rgba(99,102,241,0.3)] flex items-center justify-center gap-2">
+                                <span>Sign In & Continue</span>
+                                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                            </button>
+                        </form>
+
+                        <!-- Register Form -->
+                        <form id="form-register" class="space-y-3.5 hidden">
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Full Name</label>
+                                <div class="relative">
+                                    <i data-lucide="user" class="w-4 h-4 text-slate-500 absolute left-3 top-3"></i>
+                                    <input id="reg-name" type="text" required placeholder="Alex Mercer" class="w-full bg-slate-950/80 border border-indigo-500/25 rounded-xl pl-9 pr-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-400 transition-all">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Email Address</label>
+                                <div class="relative">
+                                    <i data-lucide="mail" class="w-4 h-4 text-slate-500 absolute left-3 top-3"></i>
+                                    <input id="reg-email" type="email" required placeholder="alex@example.com" class="w-full bg-slate-950/80 border border-indigo-500/25 rounded-xl pl-9 pr-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-400 transition-all">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Create Password</label>
+                                <div class="relative">
+                                    <i data-lucide="lock" class="w-4 h-4 text-slate-500 absolute left-3 top-3"></i>
+                                    <input id="reg-password" type="password" required minlength="4" placeholder="••••••••" class="w-full bg-slate-950/80 border border-indigo-500/25 rounded-xl pl-9 pr-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-400 transition-all">
+                                </div>
+                            </div>
+                            <button type="submit" class="w-full py-3 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 transition-all shadow-[0_4px_20px_rgba(16,185,129,0.3)] flex items-center justify-center gap-2">
+                                <span>Create Account & Continue</span>
+                                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Step 2: Cookie Consent Card (Shown right after successful auth) -->
+                    <div id="cookie-step-panel" class="hidden space-y-5 text-center fade-in-up">
+                        <div class="w-14 h-14 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-2xl flex items-center justify-center mx-auto shadow-[0_0_20px_rgba(245,158,11,0.25)]">
+                            <i data-lucide="cookie" class="w-7 h-7"></i>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <h3 class="text-lg font-black text-white">Accept Session Cookies</h3>
+                            <p class="text-xs text-slate-300 leading-relaxed">
+                                To remember your login so you <strong class="text-indigo-300">never have to log in again</strong> and access the camera & file uploader, please accept persistent session cookies.
+                            </p>
+                        </div>
+
+                        <div class="p-3 bg-slate-950/80 rounded-xl border border-indigo-500/20 text-left text-[11px] text-slate-400 space-y-1">
+                            <div class="flex items-center gap-1.5 text-emerald-400 font-semibold">
+                                <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>
+                                <span>Zero re-login prompt</span>
+                            </div>
+                            <p>• Stored safely in your browser for 365 days.</p>
+                            <p>• Immediate redirect to the scanner console upon confirmation.</p>
+                        </div>
+
+                        <div class="space-y-2 pt-1">
+                            <button id="btn-accept-cookie-step" type="button" class="w-full py-3 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 transition-all shadow-[0_4px_20px_rgba(99,102,241,0.4)] flex items-center justify-center gap-2">
+                                <i data-lucide="check" class="w-4 h-4"></i>
+                                <span>Accept Cookies & Open Scanner</span>
+                            </button>
+                            <button id="btn-skip-cookie-step" type="button" class="w-full py-2 text-xs text-slate-400 hover:text-slate-200 transition-colors">
+                                Skip & use temporary session only
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- View 2: Main Application Scanner Console (Only accessible after authentication & cookie acceptance) -->
+    <main id="view-app" class="hidden flex-grow max-w-6xl w-full mx-auto px-4 mt-6 grid grid-cols-1 md:grid-cols-12 gap-6 items-start fade-in-up">
         
         <!-- Left Side: Inputs & Scanning (4 cols on desktop) -->
         <section class="md:col-span-5 flex flex-col gap-6 w-full">
@@ -436,116 +600,6 @@
         </section>
     </main>
 
-    <!-- Authentication Modal (Sign In / Register) -->
-    <div id="auth-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-        <div class="glass-card max-w-md w-full rounded-2xl p-6 border border-indigo-500/30 shadow-2xl space-y-4 glow-indigo">
-            <div class="flex items-center justify-between border-b border-indigo-500/15 pb-3">
-                <div class="flex items-center gap-2.5 text-white font-bold text-sm tracking-wide">
-                    <div class="p-1.5 bg-indigo-500/20 text-indigo-400 rounded-lg">
-                        <i data-lucide="shield-check" class="w-4 h-4"></i>
-                    </div>
-                    <span id="auth-modal-title">Welcome to REVALUA</span>
-                </div>
-                <button id="auth-modal-close" type="button" class="text-slate-400 hover:text-white p-1 rounded-lg">
-                    <i data-lucide="x" class="w-4 h-4"></i>
-                </button>
-            </div>
-
-            <!-- Tab Switcher (Sign In vs Register) -->
-            <div class="flex border-b border-indigo-500/10 text-xs font-semibold">
-                <button id="tab-login" type="button" class="flex-1 pb-2 text-center border-b-2 border-indigo-500 text-indigo-400 transition-all">Sign In</button>
-                <button id="tab-register" type="button" class="flex-1 pb-2 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all">Create Account</button>
-            </div>
-
-            <div id="auth-alert" class="hidden p-2.5 rounded-xl text-xs font-medium border flex items-center gap-2"></div>
-
-            <!-- Sign In Form -->
-            <form id="form-login" class="space-y-3.5">
-                <div>
-                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Email or Username</label>
-                    <div class="relative">
-                        <i data-lucide="mail" class="w-4 h-4 text-slate-500 absolute left-3 top-3"></i>
-                        <input id="login-identifier" type="text" required placeholder="alex@example.com" class="w-full bg-slate-950 border border-indigo-500/25 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-400 transition-all">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Password</label>
-                    <div class="relative">
-                        <i data-lucide="lock" class="w-4 h-4 text-slate-500 absolute left-3 top-3"></i>
-                        <input id="login-password" type="password" required placeholder="••••••••" class="w-full bg-slate-950 border border-indigo-500/25 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-400 transition-all">
-                    </div>
-                </div>
-                <div class="flex items-center justify-between text-[11px]">
-                    <label class="flex items-center gap-2 cursor-pointer text-slate-300">
-                        <input id="login-remember" type="checkbox" checked class="w-3.5 h-3.5 rounded bg-slate-900 border-indigo-500/40 text-indigo-600 focus:ring-0">
-                        <span>Remember login (Cookies)</span>
-                    </label>
-                </div>
-                <button type="submit" class="w-full py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 transition-all shadow-md">
-                    Sign In
-                </button>
-            </form>
-
-            <!-- Register Form -->
-            <form id="form-register" class="space-y-3 hidden">
-                <div>
-                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Full Name</label>
-                    <div class="relative">
-                        <i data-lucide="user" class="w-4 h-4 text-slate-500 absolute left-3 top-3"></i>
-                        <input id="reg-name" type="text" required placeholder="Alex Mercer" class="w-full bg-slate-950 border border-indigo-500/25 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-400 transition-all">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Email Address</label>
-                    <div class="relative">
-                        <i data-lucide="mail" class="w-4 h-4 text-slate-500 absolute left-3 top-3"></i>
-                        <input id="reg-email" type="email" required placeholder="alex@example.com" class="w-full bg-slate-950 border border-indigo-500/25 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-400 transition-all">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Password</label>
-                    <div class="relative">
-                        <i data-lucide="lock" class="w-4 h-4 text-slate-500 absolute left-3 top-3"></i>
-                        <input id="reg-password" type="password" required minlength="4" placeholder="••••••••" class="w-full bg-slate-950 border border-indigo-500/25 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-400 transition-all">
-                    </div>
-                </div>
-                <div class="p-2.5 rounded-xl bg-indigo-950/30 border border-indigo-500/20 text-[11px] text-slate-400 flex items-start gap-2">
-                    <i data-lucide="cookie" class="w-4 h-4 text-amber-400 shrink-0 mt-0.5"></i>
-                    <span>Registering stores your persistent session cookie so you won't need to re-login on future visits.</span>
-                </div>
-                <button type="submit" class="w-full py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 transition-all shadow-md">
-                    Create Account & Continue
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Cookies Consent Banner (Appears post-register or for new visitors) -->
-    <div id="cookie-banner" class="hidden fixed bottom-4 left-4 right-4 md:left-8 md:max-w-md z-50 glass-card p-4 rounded-2xl border border-indigo-500/30 shadow-[0_10px_35px_rgba(0,0,0,0.7)] glow-indigo fade-in-up">
-        <div class="flex items-start gap-3">
-            <div class="p-2 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-xl shrink-0 mt-0.5">
-                <i data-lucide="cookie" class="w-5 h-5"></i>
-            </div>
-            <div class="space-y-1.5 flex-1">
-                <h4 class="text-xs font-bold text-white tracking-wide flex items-center justify-between">
-                    <span>Accept Session Cookies</span>
-                    <span class="text-[9px] uppercase px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-mono">Persistent</span>
-                </h4>
-                <p class="text-[11px] text-slate-300 leading-relaxed">
-                    We use secure local cookies to remember your logged-in session, edge preferences, and prevent repeated sign-in requests across browser restarts.
-                </p>
-                <div class="flex items-center gap-2 pt-1.5">
-                    <button id="btn-accept-cookies" type="button" class="flex-1 py-1.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition-all shadow-sm">
-                        Accept & Remember Login
-                    </button>
-                    <button id="btn-dismiss-cookies" type="button" class="px-3 py-1.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white border border-slate-700 hover:bg-slate-800 transition-all">
-                        Decline
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- API Key Configuration Modal (100% Client-Side Privacy) -->
     <div id="api-key-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
         <div class="glass-card max-w-md w-full rounded-2xl p-6 border border-indigo-500/30 shadow-2xl space-y-4">
@@ -646,6 +700,33 @@
         const btnAcceptCookies = document.getElementById('btn-accept-cookies');
         const btnDismissCookies = document.getElementById('btn-dismiss-cookies');
 
+        // Page / View Routing Elements
+        const viewAuth = document.getElementById('view-auth');
+        const viewApp = document.getElementById('view-app');
+        const authPanel = document.getElementById('auth-panel');
+        const cookieStepPanel = document.getElementById('cookie-step-panel');
+        const btnAcceptCookieStep = document.getElementById('btn-accept-cookie-step');
+        const btnSkipCookieStep = document.getElementById('btn-skip-cookie-step');
+
+        // Navigation & Access Control:
+        // Page 1: view-auth (Register/Login -> Accept Cookies)
+        // Page 2: view-app (Main Scanner Console with Upload & Camera)
+        function navigateToApp() {
+            viewAuth.classList.add('hidden');
+            viewApp.classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            lucide.createIcons();
+        }
+
+        function navigateToAuth() {
+            viewApp.classList.add('hidden');
+            viewAuth.classList.remove('hidden');
+            authPanel.classList.remove('hidden');
+            cookieStepPanel.classList.add('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            lucide.createIcons();
+        }
+
         // Show/hide Auth Alert message
         function showAuthAlert(msg, isSuccess = false) {
             authAlert.className = `p-2.5 rounded-xl text-xs font-medium border flex items-center gap-2 ${
@@ -698,6 +779,7 @@
         function clearActiveUser() {
             CookieManager.erase('revalua_session');
             updateAuthUI();
+            navigateToAuth();
         }
 
         function updateAuthUI() {
@@ -709,45 +791,48 @@
                 authUserBadge.classList.add('flex');
                 authUserName.textContent = user.name;
                 authUserAvatar.textContent = (user.name.charAt(0) || 'U').toUpperCase();
+
+                // Check if user has already accepted cookies or already authenticated
+                const consent = CookieManager.get('revalua_cookie_consent');
+                if (consent || user.hasAcceptedCookies) {
+                    navigateToApp();
+                } else {
+                    // Show cookie consent step before final redirect
+                    authPanel.classList.add('hidden');
+                    cookieStepPanel.classList.remove('hidden');
+                    viewAuth.classList.remove('hidden');
+                    viewApp.classList.add('hidden');
+                }
             } else {
-                // Logged out
+                // Logged out: Lock access to upload/scanner & show page 1 (auth)
                 btnOpenAuth.classList.remove('hidden');
                 authUserBadge.classList.add('hidden');
                 authUserBadge.classList.remove('flex');
+                navigateToAuth();
             }
             lucide.createIcons();
         }
 
         // Switch Auth Tabs
         tabLogin.addEventListener('click', () => {
-            tabLogin.className = "flex-1 pb-2 text-center border-b-2 border-indigo-500 text-indigo-400 font-bold transition-all";
-            tabRegister.className = "flex-1 pb-2 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all";
+            tabLogin.className = "flex-1 pb-2.5 text-center border-b-2 border-indigo-500 text-indigo-400 font-bold transition-all";
+            tabRegister.className = "flex-1 pb-2.5 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all";
             formLogin.classList.remove('hidden');
             formRegister.classList.add('hidden');
             clearAuthAlert();
         });
 
         tabRegister.addEventListener('click', () => {
-            tabRegister.className = "flex-1 pb-2 text-center border-b-2 border-indigo-500 text-indigo-400 font-bold transition-all";
-            tabLogin.className = "flex-1 pb-2 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all";
+            tabRegister.className = "flex-1 pb-2.5 text-center border-b-2 border-indigo-500 text-indigo-400 font-bold transition-all";
+            tabLogin.className = "flex-1 pb-2.5 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all";
             formRegister.classList.remove('hidden');
             formLogin.classList.add('hidden');
             clearAuthAlert();
         });
 
-        // Modal triggers
+        // Top Header Sign In button trigger
         btnOpenAuth.addEventListener('click', () => {
-            authModal.classList.remove('hidden');
-            clearAuthAlert();
-            lucide.createIcons();
-        });
-
-        authModalClose.addEventListener('click', () => {
-            authModal.classList.add('hidden');
-        });
-
-        authModal.addEventListener('click', (e) => {
-            if (e.target === authModal) authModal.classList.add('hidden');
+            navigateToAuth();
         });
 
         // Handle Login Submission
@@ -764,28 +849,31 @@
             );
 
             if (found) {
-                setActiveUser({ name: found.name, email: found.email, id: found.id }, remember);
-                showAuthAlert(`Welcome back, ${found.name}! Logging you in...`, true);
+                showAuthAlert(`Welcome back, ${found.name}! Verifying credentials...`, true);
                 setTimeout(() => {
-                    authModal.classList.add('hidden');
+                    setActiveUser({ name: found.name, email: found.email, id: found.id }, remember);
                     formLogin.reset();
                     clearAuthAlert();
-                }, 600);
+                    // Proceed to Cookie Consent step
+                    authPanel.classList.add('hidden');
+                    cookieStepPanel.classList.remove('hidden');
+                    lucide.createIcons();
+                }, 400);
             } else {
-                // If demo or no match, allow instant registration or verify check
                 if (users.length === 0) {
-                    // Auto-onboard default user if registry is empty
+                    // Auto-onboard user if registry is empty
                     const newUser = { id: 'u_' + Date.now(), name: identifier.split('@')[0], email: identifier.includes('@') ? identifier : `${identifier}@revalua.app`, password: password };
                     users.push(newUser);
                     saveRegisteredUsers(users);
-                    setActiveUser({ name: newUser.name, email: newUser.email, id: newUser.id }, remember);
                     showAuthAlert(`Account initialized for ${newUser.name}!`, true);
-                    showCookieBannerPrompt();
                     setTimeout(() => {
-                        authModal.classList.add('hidden');
+                        setActiveUser({ name: newUser.name, email: newUser.email, id: newUser.id }, remember);
                         formLogin.reset();
                         clearAuthAlert();
-                    }, 600);
+                        authPanel.classList.add('hidden');
+                        cookieStepPanel.classList.remove('hidden');
+                        lucide.createIcons();
+                    }, 400);
                 } else {
                     showAuthAlert('Invalid credentials. Please verify your password or create an account.');
                 }
@@ -809,16 +897,34 @@
             users.push(newUser);
             saveRegisteredUsers(users);
 
-            // Log in user automatically with persistent session cookie
-            setActiveUser({ name: newUser.name, email: newUser.email, id: newUser.id }, true);
-
             showAuthAlert(`Account created successfully! Welcome, ${name}.`, true);
             setTimeout(() => {
-                authModal.classList.add('hidden');
+                // Log in user with persistent session cookie
+                setActiveUser({ name: newUser.name, email: newUser.email, id: newUser.id }, true);
                 formRegister.reset();
                 clearAuthAlert();
-                showCookieBannerPrompt();
-            }, 600);
+                // Step 2: Show Cookie Consent Panel before redirecting to main scanner
+                authPanel.classList.add('hidden');
+                cookieStepPanel.classList.remove('hidden');
+                lucide.createIcons();
+            }, 400);
+        });
+
+        // Step 2: Cookie Acceptance Confirmation & Redirect to Main Page
+        btnAcceptCookieStep.addEventListener('click', () => {
+            CookieManager.set('revalua_cookie_consent', 'accepted', 365);
+            const user = getActiveUser();
+            if (user) {
+                user.hasAcceptedCookies = true;
+                CookieManager.set('revalua_session', JSON.stringify(user), 365);
+            }
+            // Redirect to Page 2 (Main App Scanner)
+            navigateToApp();
+        });
+
+        btnSkipCookieStep.addEventListener('click', () => {
+            CookieManager.set('revalua_cookie_consent', 'declined', 1);
+            navigateToApp();
         });
 
         // Logout
@@ -828,34 +934,8 @@
             }
         });
 
-        // Cookie Consent Banner Handling
-        function showCookieBannerPrompt() {
-            const consent = CookieManager.get('revalua_cookie_consent');
-            if (!consent) {
-                cookieBanner.classList.remove('hidden');
-                lucide.createIcons();
-            }
-        }
-
-        btnAcceptCookies.addEventListener('click', () => {
-            CookieManager.set('revalua_cookie_consent', 'accepted', 365);
-            // Refresh persistent session cookie for current user if logged in
-            const user = getActiveUser();
-            if (user) {
-                CookieManager.set('revalua_session', JSON.stringify(user), 365);
-            }
-            cookieBanner.classList.add('hidden');
-        });
-
-        btnDismissCookies.addEventListener('click', () => {
-            CookieManager.set('revalua_cookie_consent', 'declined', 30);
-            cookieBanner.classList.add('hidden');
-        });
-
-        // Initialize Authentication State on Load
+        // Initialize Authentication & View Routing on Load
         updateAuthUI();
-        // Check if cookie consent is needed
-        setTimeout(showCookieBannerPrompt, 1200);
 
         // DOM elements
         const tabUpload = document.getElementById('tab-upload');
